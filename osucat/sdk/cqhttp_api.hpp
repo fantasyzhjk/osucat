@@ -2,15 +2,11 @@
 #ifndef CQHTTP_API
 #define CQHTTP_API
 
-using json = nlohmann::json;
-
 char output_prefix[512];
 char wsfulladdress[1024];
 char wshost[64];
 int wsport;
 static easywsclient::WebSocket::pointer gwsp = NULL;
-
-std::unique_ptr<easywsclient::WebSocket> gwsp1;
 
 namespace cqhttp_api {
 
@@ -18,6 +14,7 @@ namespace cqhttp_api {
 		INVALID,
 		MESSAGE,
 		REQUEST,
+		EVENT,
 	};
 
 	struct Target {
@@ -192,6 +189,37 @@ namespace cqhttp_api {
 			std::cout << tmp << std::endl;
 			send(j);
 		}
+	}
+
+	PictureInfo getImage(std::string file_name) {
+		json jp;
+		jp["file"] = file_name;
+		PictureInfo rtn;
+		rtn.size = 0;
+		rtn.filename = "";
+		rtn.url = "";
+		rtn.format = "";
+		try {
+			std::string data = osucat::NetConnection::HttpPost("http://127.0.0.1:5700/get_image", jp);
+			json j = json::parse(data)["data"];
+			rtn.size = j["size"].get<int32_t>();
+			rtn.filename = j["filename"].get<std::string>();
+			rtn.url = j["url"].get<std::string>();
+			rtn.format = rtn.filename.substr(rtn.filename.length() - 4);
+		}
+		catch (osucat::NetWork_Exception& ex) {
+			std::cout << ex.Show() << std::endl;
+		}
+		char msg[4096];
+		sprintf_s(msg,
+			u8"[%s] %s[↓]: 接收图片 %s | 图片格式：%s | 大小: %ld | URL: %s",
+			utils::unixTime2Str(time(NULL)).c_str(), output_prefix,
+			rtn.filename.c_str(),
+			rtn.format,
+			rtn.size,
+			rtn.url.c_str());
+		std::cout << msg << std::endl;
+		return rtn;
 	}
 
 	Type Parser(std::string rawstr, Target* target, GroupSender* sender, Request* request) {

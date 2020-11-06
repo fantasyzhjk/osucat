@@ -3797,11 +3797,11 @@ namespace cqhttp_api::utils {
 		string_replace(res, "&amp;", "&");
 		return res;
 	}
-	//这功能有缺陷
+	// --fixed
 	static std::string GetMiddleText(std::string regularStr, std::string frontStr, std::string behindStr) {
 		std::string str;
 		try {
-			str = regularStr.substr(regularStr.find(frontStr) + 1);
+			str = regularStr.substr(regularStr.find(frontStr) + frontStr.length());
 			str = str.substr(0, str.find(behindStr));
 			return str;
 		}
@@ -3831,6 +3831,18 @@ namespace cqhttp_api::utils {
 		string_replace(res, "[OC:character,id=1]", "\"");
 		string_replace(res, "[OC:character,id=2]", "'");
 		return res;
+	}
+	static void DelFileHandler(std::string filename, int delayTime = 0) {
+		/*
+		可以设置delayTime来决定在几秒后删除
+		*/
+		if (delayTime > 0)Sleep(delayTime * 1000);
+		DeleteFileA(filename.c_str());
+	}
+	static void _DelayDelTmpFile(std::string filename, int delayTime = 15) {
+		//delayTime单位：秒
+		std::thread DFH(std::bind(&DelFileHandler, filename, delayTime));
+		DFH.detach();
 	}
 };
 

@@ -11,9 +11,9 @@ add_executable (osucat
 "include/easywsclient/easywsclient.hpp"
 "include/easywsclient/easywsclient.cpp"
 "include/json/json.hpp"
-"include/oppai-cpp/oppai/mods.hpp"
-"include/oppai-cpp/oppai/oppai.c"
-"include/oppai-cpp/oppai.hpp"
+"src/include/oppai-cpp/oppai/mods.hpp"
+"src/include/oppai-cpp/oppai/oppai.c"
+"src/include/oppai-cpp/oppai.hpp"
 "main.cpp"
 "main.h"
 "sdk/cqhttp_api.hpp"
@@ -23,7 +23,10 @@ add_executable (osucat
 "sdk/client.hpp"
 "src/include/osu_api.hpp"
 "src/exception.hpp"
-"src/include/winhttp.hpp" "src/include/mysql.hpp" "src/message.h")
+"src/include/winhttp.hpp"
+"src/include/mysql.hpp"
+"src/message.h"
+"src/image.hpp" "src/badge.hpp")
 
 # TODO: 如有需要，请添加测试并安装目标。
 

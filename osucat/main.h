@@ -20,11 +20,11 @@ char OC_OSU_API_KEY[128];
 #include <WinSock2.h>
 #include <iostream>
 #include <algorithm>
-#include <Magick++.h>
 #include <sstream>
 #include <string>
 #include <memory>
 #include <cmath>
+#include <random>
 #include <time.h>
 #include <Windows.h>
 #include <optional>
@@ -41,6 +41,8 @@ char OC_OSU_API_KEY[128];
 #pragma comment(lib, "winhttp.lib")
 
 #include "sdk/utils.hpp"
+#include "src/exception.hpp"
+#include "src/include/winhttp.hpp"
 #include "sdk/cqhttp_api.hpp"
 #include "src/osucat.hpp"
 #include "src/main.hpp"

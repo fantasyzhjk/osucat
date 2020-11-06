@@ -485,7 +485,7 @@ easywsclient::WebSocket::pointer from_url(const std::string& url, bool useMask, 
     //fprintf(stderr, "easywsclient: connecting: host=%s port=%d path=/%s\n", host, port, path);
     socket_t sockfd = hostname_connect(host, port);
     if (sockfd == INVALID_SOCKET) {
-        fprintf(stderr, "Unable to connect to %s:%d\n", host, port);
+        fprintf(stderr, u8"无法连接至服务器 %s:%d\n", host, port);
         return NULL;
     }
     {

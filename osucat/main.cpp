@@ -26,7 +26,6 @@ int main()
 	A:
 		sprintf_s(wsfulladdress, "ws://%s:%d/", wshost, wsport);
 		cqhttp_api::wsclient();
-		cout << u8"已失去连接，正在重试..." << endl;
 		goto A;
 	}
 	else {

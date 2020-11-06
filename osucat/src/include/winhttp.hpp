@@ -5,6 +5,8 @@
 #define PP_PLUS_API "https://syrin.me/pp+/api/user/"
 #define HTTPHEADER L"osucat/<1.0> (Windows NT 10.0; Win64) WinHttp/5.1"
 
+using json = nlohmann::json;
+
 namespace osucat {
 	class NetConnection {
 	public:

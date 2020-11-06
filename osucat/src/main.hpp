@@ -8,6 +8,7 @@ namespace cqhttp_api {
 	class Event {
 	public:
 		static void on_message(const Target target, const GroupSender sender) {
+			osucat::CmdParser::parser(target, sender);
 			//gwsp->close();
 			//echo(target, sender);
 		}

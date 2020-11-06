@@ -23,20 +23,24 @@ namespace cqhttp_api {
 			system("pause");
 			return;
 		}
-		gwsp1->from_url(wsfulladdress);
 		std::unique_ptr<easywsclient::WebSocket> ws(easywsclient::WebSocket::from_url(wsfulladdress));
 		gwsp = &*ws;
-		std::cout << u8"已成功建立连接。" << std::endl;
+		if (NULL == ws) {
+			return;
+		}
+		else {
+			cout << u8"已成功建立连接。" << endl;
+		}
 		while (ws->getReadyState() != easywsclient::WebSocket::CLOSED) {
 			easywsclient::WebSocket::pointer wspw = &*ws;
 			ws->poll();
 			ws->dispatch([wspw](const std::string& message) {
-				//if (DEBUGMODE) cout << message << "\n" << endl;
-				cout << message << endl;
+				if (OC_DEBUG_MODE) cout << message << "\n" << endl;
 				thread MultiProcessThread(bind(&Processer, message));
 				MultiProcessThread.detach();
 				});
 		}
+		cout << u8"已失去连接，正在重试..." << endl;
 	}
 }
 #endif
