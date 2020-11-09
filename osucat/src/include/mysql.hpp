@@ -13,13 +13,17 @@
 char SQL_USER[32], SQL_HOST[32], SQL_PWD[32], SQL_DATABASE[32];
 int SQL_PORT;
 
+namespace osucat::addons {
+	enum driftingBottleDBEvent { WRITEIN = 0, ADDCOUNTER, CHANGESTATUS, DELETEBOTTLE };
+}
+
 namespace osucat::entertainment {
 	// TODO
 }
 
 namespace osucat {
 
-	struct Admin {
+	struct AdminInfo {
 		int64_t user_id;
 		int role;  // 0=normal user 1=admin/owner 2=moderator
 	};
@@ -31,7 +35,7 @@ namespace osucat {
 		std::string description;
 	};
 
-	static std::vector<Admin> adminlist;
+	static std::vector<AdminInfo> adminlist;
 
 	class Database {
 	public:
@@ -571,396 +575,255 @@ namespace osucat {
 			catch (osucat::database_exception) { return EOF; }
 		}
 
+		void osu_addbadge(int64_t uid, std::string str) {
+			std::vector<int> tmp = this->osu_GetBadgeList(uid);
+			if (tmp.size() == 0) { this->Insert("insert into badge (uid, badge) values (" + std::to_string(uid) + ", \"" + str + "\")"); }
+			else { this->Update("update badge set badge=\"" + str + "\" where uid=" + std::to_string(uid)); }
+		}
 
+		bool add_blacklist(int64_t qq) {
+			try {
+				this->Insert("INSERT INTO blacklist (qq,is_blocked) values(" + std::to_string(qq) + ",1)");
+				try {
+					int64_t uid = this->osu_getuserid(qq);
+					if (uid != 0) {
+						this->Delete("DELETE from info where uid = " + std::to_string(uid));
+						this->Delete("DELETE from info_record where uid = " + std::to_string(uid));
+					}
+				}
+				catch (osucat::database_exception) {}
+				try {
+					this->Update(u8"UPDATE bottlemsgrecord SET available=0,sendtime=0,sender=-1,nickname=\"deleted\",message=\"此消息已被管理员删除\" where sender=" + std::to_string(qq));
+				}
+				catch (osucat::database_exception) {}
+				return true;
+			}
+			catch (osucat::database_exception) {
+				return false;
+			}
+		}
 
+		int is_Blocked(int64_t qq) {
+			try { return std::stoi(this->Select("select is_blocked from blacklist where qq=" + std::to_string(qq))[0]["is_blocked"].get<std::string>()); }
+			catch (osucat::database_exception) { return 0; }
+		}
 
+		bool osu_setNewBadge(Badgeinfo bi, int* id) {
+			try {
+				this->Insert("INSERT INTO badge_list (name,name_chinese,description) VALUES (\"" + bi.name + "\",\"" + bi.name_chinese + "\",\"" + bi.description + "\")");
+				json j = this->Select("Select id from badge_list");
+				*id = j.size() - 1;
+				return true;
+			}
+			catch (osucat::database_exception) { *id = -1; }
+			return false;
+		}
 
+		bool osu_updatebadgeinfo(Badgeinfo bi, int f) {
+			if (f > 3 || f < 1) {
+				return false;
+			}
+			std::string query;
+			if (f = 1) {
+				query = u8"UPDATE badge_list set name=\"" + bi.name + "\" where id=" + std::to_string(bi.id);
+			}
+			else if (f = 2) {
+				query = u8"UPDATE badge_list set name_chinese=\"" + bi.name_chinese + "\" where id=" + std::to_string(bi.id);
+			}
+			else if (f = 3) {
+				query = u8"UPDATE badge_list set description=\"" + bi.description + "\" where id=" + std::to_string(bi.id);
+			}
+			try {
+				this->Update(query);
+				return true;
+			}
+			catch (osucat::database_exception) {
+				return false;
+			}
+		}
 
+		//1 = isdaily plus+20 /2 = plus /3 = minus
+		void setBottleRemaining(int isdaily, int64_t qq, int dailyoldvalue = 0) {
+			if (isdaily == 1) { this->Update("update bottlerecord set remaining=" + std::to_string(floor(dailyoldvalue * 0.5) + 5) + ",lastrewardtime=" + std::to_string(time(NULL)) + " where qq=" + std::to_string(qq)); return; }
+			if (isdaily == 2) { this->Update("update bottlerecord set remaining=" + std::to_string(this->getUserBottleRemaining(qq) + 2) + " where qq=" + std::to_string(qq)); return; }
+			if (isdaily == 3) { this->Update("update bottlerecord set remaining=" + std::to_string(this->getUserBottleRemaining(qq) - 1) + " where qq=" + std::to_string(qq)); return; }
+		}
+
+		int getUserBottleRemaining(int64_t qq) {
+			try {
+				std::string query = "SELECT * FROM bottlerecord WHERE qq=" + std::to_string(qq);
+				json j = this->Select(query);
+				int64_t a = stoll(j[0]["lastrewardtime"].get<std::string>());
+				int b = stoi(j[0]["remaining"].get<std::string>());
+				char rtn[128];
+				time_t tick = a;
+				struct tm tm = { 0 };
+				tm = *localtime(&tick);
+				strftime(rtn, 128, "%d", &tm);
+				std::string tmp1 = rtn;
+				tick = time(NULL);
+				tm = *localtime(&tick);
+				strftime(rtn, 128, "%d", &tm);
+				std::string tmp2 = rtn;
+				if (tmp1 != tmp2) {
+					this->setBottleRemaining(1, qq, b);
+					j = this->Select(query);
+					return stoi(j[0]["remaining"].get<std::string>());
+				}
+				else { return stoi(j[0]["remaining"].get<std::string>()); }
+			}
+			catch (osucat::database_exception) { this->Insert("INSERT INTO bottlerecord (qq,remaining,lastrewardtime) VALUES (" + std::to_string(qq) + ",5," + std::to_string(time(NULL)) + ")"); return 5; }
+		}
+
+		void writeBottle(osucat::addons::driftingBottleDBEvent d, int id, int64_t sendtimetick, int64_t senderuid, const std::string nickname, const std::string message) {
+			char tmp[10240];
+			switch (d) {
+			case osucat::addons::driftingBottleDBEvent::WRITEIN:
+				sprintf_s(tmp,
+					"INSERT INTO bottlemsgrecord (sendtime,sender,message,nickname) values (%lld,%lld,\"%s\",\"%s\")",
+					sendtimetick,
+					senderuid,
+					message.c_str(),
+					nickname.c_str());
+				this->Insert(tmp);
+				break;
+			case osucat::addons::driftingBottleDBEvent::ADDCOUNTER: {
+				json j = this->Select("SELECT pickcount FROM bottlemsgrecord where id=" + std::to_string(id));
+				sprintf_s(tmp,
+					"UPDATE bottlemsgrecord SET pickcount=%d where id=%d",
+					stoi(j[0]["pickcount"].get<std::string>()) + 1,
+					id);
+				this->Update(tmp);
+				break;
+			}
+			case osucat::addons::driftingBottleDBEvent::CHANGESTATUS:
+				sprintf_s(tmp,
+					"UPDATE bottlemsgrecord SET available=0 where id=%d",
+					id);
+				this->Update(tmp);
+				break;
+			case osucat::addons::driftingBottleDBEvent::DELETEBOTTLE:
+				sprintf_s(tmp,
+					u8"UPDATE bottlemsgrecord SET available=0,sendtime=0,sender=-1,nickname=\"deleted\",message=\"此消息已被管理员删除\" where id=%d",
+					id);
+				this->Update(tmp);
+				break;
+			default:
+				break;
+			}
+		}
+
+		std::string getBottleStatistics() {
+			json j = this->Select("SELECT * FROM bottletprecord");
+			int length = j.size();
+			double total_pick = 0;
+			double total_throw = 0;
+			double poolSize = BOTLEEXPECTEDVALUE;
+			double rate = INITIALTPRATE;
+			std::string last3 = "";
+			for (int k = 0; k < length; k++) {
+				double kpick = stoi(j[k]["pick"].get<std::string>());
+				double kthrow = stoi(j[k]["throw"].get<std::string>());
+				total_pick += kpick;
+				total_throw += kthrow;
+				if (k < length - 1) {
+					poolSize = poolSize * 0.8 + 0.2 * kpick * 0.4;
+					if (kpick > 0.5) rate = rate * 0.8 + 0.2 * kthrow / kpick;
+				}
+				if (k >= length - 3) last3 = last3 + "\n" + std::to_string((int)kthrow) + "/" + std::to_string((int)kpick);
+			}
+			if (poolSize > MAXPOOLSIZE) poolSize = MAXPOOLSIZE;
+			if (poolSize < MINPOOLSIZE) poolSize = MINPOOLSIZE;
+			double removeProb = min(1, rate * pow((double)this->getNumberOfAvailableBottles() / poolSize, 0.7));
+			return u8"当前剩余瓶数 = " + std::to_string(this->getNumberOfAvailableBottles()) + u8"\n总扔/捡数 = " + std::to_string((int)total_throw) + "/" + std::to_string((int)total_pick) + u8"\n扔捡率 = " + std::to_string(rate) + u8"\n期望池子大小 = " + std::to_string((int)poolSize) + u8"\n当前移除概率 = " + std::to_string(removeProb) + u8"\n近3天扔捡 = " + last3;
+		}
+
+		json getBottles() {
+			try { return this->Select("SELECT * FROM bottlemsgrecord where available = 1"); }
+			catch (osucat::database_exception) { json j; return  j; }
+		}
+
+		int getNumberOfAvailableBottles() {
+			try { return this->Select("SELECT * FROM bottlemsgrecord where available = 1").size(); }
+			catch (osucat::database_exception) { return -1; }
+		}
+
+		json getBottleByID(int id) {
+			try { return this->Select("SELECT * FROM bottlemsgrecord where id = " + std::to_string(id)); }
+			catch (osucat::database_exception) { json j; return j; }
+		}
+
+		bool RemoveBottle(int bottleExsitDays, int bottleid) {
+			try {
+				json j = this->Select("SELECT * FROM bottletprecord where date=\"" + cqhttp_api::utils::unixTime2DateStr(time(NULL) - 86400) + "\"");
+				int length = j.size();
+				double poolSize = BOTLEEXPECTEDVALUE;
+				double rate = INITIALTPRATE;
+				for (int k = 0; k < length; k++) {
+					double kpick = stoi(j[k]["pick"].get<std::string>());
+					double kthrow = stoi(j[k]["throw"].get<std::string>());
+					poolSize = poolSize * 0.8 + 0.2 * kpick * 0.4;  // Adjust the size of pool to around 40% of #average daily pickups
+					if (kpick > 0.5) rate = rate * 0.8 + 0.2 * kthrow / kpick;
+				}
+				if (poolSize > MAXPOOLSIZE) poolSize = MAXPOOLSIZE;
+				if (poolSize < MINPOOLSIZE) poolSize = MINPOOLSIZE;
+				double removeProb = pow(min(1, rate * pow((double)this->getNumberOfAvailableBottles() / poolSize, 0.7)), 1 / (max(1, bottleExsitDays - BOTTLEMAXEXISTDAYS)));
+				if (cqhttp_api::utils::randomNum(1, 10000) / 10000.0 < removeProb) {
+					this->writeBottle(osucat::addons::driftingBottleDBEvent::CHANGESTATUS, bottleid, 0, 0, "", "");
+					return true;
+				}
+				else return false;
+			}
+			catch (osucat::database_exception) {
+				try { this->Insert("INSERT INTO bottletprecord (date,throw,pick) values (\"" + cqhttp_api::utils::unixTime2DateStr(time(NULL) - 86400) + "\",100,200)"); }
+				catch (osucat::database_exception) {}
+				return false;
+			}
+		}
+
+		//true = pick /false = throw
+		void addPickThrowCount(bool pickthrow) {
+			json j;
+			try {
+				j = this->Select("SELECT * FROM bottletprecord where date=\"" + cqhttp_api::utils::unixTime2DateStr(time(NULL)) + "\"");
+			}
+			catch (osucat::database_exception) {
+				this->setNewPickThrowRecord();
+				return;
+			}
+			if (pickthrow) {
+				this->Update("UPDATE bottletprecord set pick=" + std::to_string(stoi(j[0]["pick"].get<std::string>()) + 1) + " where date=\"" + cqhttp_api::utils::unixTime2DateStr(time(NULL)) + "\"");
+			}
+			else {
+				this->Update("UPDATE bottletprecord set throw=" + std::to_string(stoi(j[0]["throw"].get<std::string>()) + 1) + " where date=\"" + cqhttp_api::utils::unixTime2DateStr(time(NULL)) + "\"");
+			}
+		}
+
+		void setNewPickThrowRecord() {
+			this->Insert("INSERT INTO bottletprecord (date) values (\"" + cqhttp_api::utils::unixTime2DateStr(time(NULL)) + "\")");
+		}
+
+		int getBottleID(int64_t sender, std::string message, time_t time) {
+			try { return stoi(this->Select("SELECT id FROM bottlemsgrecord where sendtime=" + std::to_string(time) + " AND sender=" + std::to_string(sender) + " AND message=\"" + message + "\"")[0]["id"].get<std::string>()); }
+			catch (osucat::database_exception) { return 0; }
+		}
+
+		bool reloadAdmin() {
+			try {
+				json j = this->Select("SELECT * FROM info where role=1 or role=2");
+				adminlist.clear();
+				for (int i = 0; i < j.size(); ++i) {
+					AdminInfo s;
+					s.user_id = stoll(j[i]["qq"].get<std::string>());
+					s.role = stoi(j[i]["role"].get<std::string>());
+					adminlist.push_back(s);
+				}
+				return true;
+			}
+			catch (osucat::database_exception) { return false; }
+		}
 
 		/// /// /// /// /// outdated /// /// /// /// ///
-
-
-		///*0=success -1=no record*/
-
-
-
-
-
-
-
-
-		//void addbadge(int64_t uid, string str) {
-		//	string query;
-		//	vector<int> tmp = this->GetBadgeList(uid);
-		//	if (tmp.size() == 0) {
-		//		string query = "insert into badge (uid, badge) values (" + std::to_string(uid) + ", \"" + str + "\")";
-		//		this->Insert(query);
-		//	}
-		//	else {
-		//		string query = "update badge set badge=\"" + str + "\" where uid=" + std::to_string(uid);
-		//		this->Update(query);
-		//	}
-		//}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		//bool add_blacklist(int64_t qq) {
-		//	try {
-		//		this->Insert("INSERT INTO blacklist (qq,is_blocked) values(" + std::to_string(qq) + ",1)");
-		//		try {
-		//			int64_t uid = this->GetUserID(qq);
-		//			if (uid != 0) {
-		//				this->Delete("DELETE from info where uid = " + std::to_string(uid));
-		//				this->Delete("DELETE from info_record where uid = " + std::to_string(uid));
-		//			}
-		//		}
-		//		catch (osucat::database_exception) {}
-		//		try {
-		//			this->Update(u8"UPDATE bottlemsgrecord SET available=0,sendtime=0,sender=-1,nickname=\"deleted\",message=\"此消息已被管理员删除\" where sender=" + std::to_string(qq));
-		//		}
-		//		catch (osucat::database_exception) {}
-		//		return true;
-		//	}
-		//	catch (osucat::database_exception) {
-		//		return false;
-		//	}
-		//}
-
-		//int is_Blocked(int64_t qq) {
-		//	try {
-		//		json result = this->Select("select is_blocked from blacklist where qq=" + std::to_string(qq));
-		//		return std::stoi(result[0]["is_blocked"].get<std::string>());
-		//	}
-		//	catch (osucat::database_exception) {
-		//		return 0;
-		//	}
-		//}
-
-
-		//int isdaily
-		//1 = isdaily plus+20
-		//2 = plus
-		//3 = minus
-		//*/
-		//void setBottleRemaining(int isdaily, int64_t qq, int dailyoldvalue = 0) {
-		//	if (isdaily == 1) {
-		//		string query = "update bottlerecord set remaining=" + std::to_string(floor(dailyoldvalue * 0.5) + 5) + ",lastrewardtime=" + std::to_string(time(NULL)) + " where qq=" + std::to_string(qq);
-		//		this->Update(query);
-		//		return;
-		//	}
-		//	if (isdaily == 2) {
-		//		int oldr = this->getUserBottleRemaining(qq);
-		//		string query = "update bottlerecord set remaining=" + std::to_string(oldr + 2) + " where qq=" + std::to_string(qq);
-		//		this->Update(query);
-		//		return;
-		//	}
-		//	if (isdaily == 3) {
-		//		int oldr = this->getUserBottleRemaining(qq);
-		//		string query = "update bottlerecord set remaining=" + std::to_string(oldr - 1) + " where qq=" + std::to_string(qq);
-		//		this->Update(query);
-		//		return;
-		//	}
-		//}
-
-		//int getUserBottleRemaining(int64_t qq) {
-		//	try {
-		//		string query = "SELECT * FROM bottlerecord WHERE qq=" + std::to_string(qq);
-		//		json j = this->Select(query);
-		//		int64_t a = stoll(j[0]["lastrewardtime"].get<std::string>());
-		//		int b = stoi(j[0]["remaining"].get<std::string>());
-		//		char rtn[128];
-		//		time_t tick = a;
-		//		struct tm tm = { 0 };
-		//		tm = *localtime(&tick);
-		//		strftime(rtn, 128, "%d", &tm);
-		//		string tmp1 = rtn;
-		//		tick = time(NULL);
-		//		tm = *localtime(&tick);
-		//		strftime(rtn, 128, "%d", &tm);
-		//		string tmp2 = rtn;
-		//		if (tmp1 != tmp2) {
-		//			this->setBottleRemaining(1, qq, b);
-		//			j = this->Select(query);
-		//			return stoi(j[0]["remaining"].get<std::string>());
-		//		}
-		//		else {
-		//			return stoi(j[0]["remaining"].get<std::string>());
-		//		}
-		//	}
-		//	catch (osucat::database_exception) {
-		//		string query = "INSERT INTO bottlerecord (qq,remaining,lastrewardtime) VALUES (" + std::to_string(qq) + ",5," + std::to_string(time(NULL)) + ")";
-		//		this->Insert(query);
-		//		return 5;
-		//	}
-		//}
-
-		//void writeBottle(osucat::addons::driftingBottleDBEvent d, int id, int64_t sendtimetick, int64_t senderuid, string nickname, string message) {
-		//	char tmp[10240];
-		//	switch (d) {
-		//	case osucat::addons::driftingBottleDBEvent::WRITEIN:
-		//		sprintf_s(tmp,
-		//			"INSERT INTO bottlemsgrecord (sendtime,sender,message,nickname) values (%lld,%lld,\"%s\",\"%s\")",
-		//			sendtimetick,
-		//			senderuid,
-		//			message.c_str(),
-		//			nickname.c_str());
-		//		this->Insert(tmp);
-		//		break;
-		//	case osucat::addons::driftingBottleDBEvent::ADDCOUNTER: {
-		//		json j = this->Select("SELECT pickcount FROM bottlemsgrecord where id=" + std::to_string(id));
-		//		sprintf_s(tmp,
-		//			"UPDATE bottlemsgrecord SET pickcount=%d where id=%d",
-		//			stoi(j[0]["pickcount"].get<std::string>()) + 1,
-		//			id);
-		//		this->Update(tmp);
-		//		break;
-		//	}
-		//	case osucat::addons::driftingBottleDBEvent::CHANGESTATUS:
-		//		sprintf_s(tmp,
-		//			"UPDATE bottlemsgrecord SET available=0 where id=%d",
-		//			id);
-		//		this->Update(tmp);
-		//		break;
-		//	case osucat::addons::driftingBottleDBEvent::DELETEBOTTLE:
-		//		sprintf_s(tmp,
-		//			u8"UPDATE bottlemsgrecord SET available=0,sendtime=0,sender=-1,nickname=\"deleted\",message=\"此消息已被管理员删除\" where id=%d",
-		//			id);
-		//		this->Update(tmp);
-		//		break;
-		//	default:
-		//		break;
-		//	}
-		//}
-
-		//json getBottles() {
-		//	try {
-		//		json j = this->Select("SELECT * FROM bottlemsgrecord where available = 1");
-		//		return j;
-		//	}
-		//	catch (osucat::database_exception) {
-		//		json j;
-		//		return j;
-		//	}
-
-		//}
-
-		//int getNumberOfAvailableBottles() {
-		//	try {
-		//		json j = this->Select("SELECT * FROM bottlemsgrecord where available = 1");
-		//		return j.size();
-		//	}
-		//	catch (osucat::database_exception) {
-		//		return -1;
-		//	}
-		//}
-
-		//string getBottleStatistics() {
-		//	json j = this->Select("SELECT * FROM bottletprecord");
-		//	int length = j.size();
-		//	double total_pick = 0;
-		//	double total_throw = 0;
-		//	double poolSize = BOTLEEXPECTEDVALUE;
-		//	double rate = INITIALTPRATE;
-		//	string last3 = "";
-		//	for (int k = 0; k < length; k++) {
-		//		double kpick = stoi(j[k]["pick"].get<std::string>());
-		//		double kthrow = stoi(j[k]["throw"].get<std::string>());
-		//		total_pick += kpick;
-		//		total_throw += kthrow;
-		//		if (k < length - 1) {
-		//			poolSize = poolSize * 0.8 + 0.2 * kpick * 0.4;
-		//			if (kpick > 0.5) rate = rate * 0.8 + 0.2 * kthrow / kpick;
-		//		}
-		//		if (k >= length - 3) last3 = last3 + "\n" + std::to_string((int)kthrow) + "/" + std::to_string((int)kpick);
-		//	}
-		//	if (poolSize > MAXPOOLSIZE) poolSize = MAXPOOLSIZE;
-		//	if (poolSize < MINPOOLSIZE) poolSize = MINPOOLSIZE;
-
-		//	double removeProb = min(1, rate * pow((double)this->getNumberOfAvailableBottles() / poolSize, 0.7));
-		//	return u8"当前剩余瓶数 = " + std::to_string(this->getNumberOfAvailableBottles()) + u8"\n总扔/捡数 = " + std::to_string((int)total_throw) + "/" + std::to_string((int)total_pick) + u8"\n扔捡率 = " + std::to_string(rate) + u8"\n期望池子大小 = " + std::to_string((int)poolSize) + u8"\n当前移除概率 = " + std::to_string(removeProb) + u8"\n近3天扔捡 = " + last3;
-		//}
-
-		//json getBottleByID(int id) {
-		//	try {
-		//		json j = this->Select("SELECT * FROM bottlemsgrecord where id = " + std::to_string(id));
-		//		return j;
-		//	}
-		//	catch (osucat::database_exception) {
-		//		json j;
-		//		return j;
-		//	}
-		//}
-
-		//bool RemoveBottle(int bottleExsitDays, int bottleid) {
-		//	try {
-		//		json j = this->Select("SELECT * FROM bottletprecord where date=\"" + cqhttp_api::cqhttp_api::utils::unixTime2DateStr(time(NULL) - 86400) + "\"");
-		//		int length = j.size();
-		//		double poolSize = BOTLEEXPECTEDVALUE;
-		//		double rate = INITIALTPRATE;
-		//		for (int k = 0; k < length; k++) {
-		//			double kpick = stoi(j[k]["pick"].get<std::string>());
-		//			double kthrow = stoi(j[k]["throw"].get<std::string>());
-		//			poolSize = poolSize * 0.8 + 0.2 * kpick * 0.4;  // Adjust the size of pool to around 40% of #average daily pickups
-		//			if (kpick > 0.5) rate = rate * 0.8 + 0.2 * kthrow / kpick;
-		//		}
-		//		if (poolSize > MAXPOOLSIZE) poolSize = MAXPOOLSIZE;
-		//		if (poolSize < MINPOOLSIZE) poolSize = MINPOOLSIZE;
-		//		double removeProb = pow(min(1, rate * pow((double)this->getNumberOfAvailableBottles() / poolSize, 0.7)), 1 / (max(1, bottleExsitDays - BOTTLEMAXEXISTDAYS)));
-		//		if (cqhttp_api::utils::randomNum(1, 10000) / 10000.0 < removeProb) {
-		//			this->writeBottle(osucat::addons::driftingBottleDBEvent::CHANGESTATUS, bottleid, 0, 0, "", "");
-		//			return true;
-		//		}
-		//		else return false;
-		//	}
-		//	catch (osucat::database_exception) {
-		//		try { this->Insert("INSERT INTO bottletprecord (date,throw,pick) values (\"" + cqhttp_api::utils::unixTime2DateStr(time(NULL) - 86400) + "\",100,200)"); }
-		//		catch (osucat::database_exception) {}
-		//		return false;
-		//	}
-		//}
-
-
-
-		//bool pickthrow
-		//true = pick
-		//false = throw
-		//*/
-		//void addPickThrowCount(bool pickthrow) {
-		//	json j;
-		//	try {
-		//		j = this->Select("SELECT * FROM bottletprecord where date=\"" + cqhttp_api::utils::unixTime2DateStr(time(NULL)) + "\"");
-		//	}
-		//	catch (osucat::database_exception) {
-		//		this->setNewPickThrowRecord();
-		//		return;
-		//	}
-		//	if (pickthrow) {
-		//		this->Update("UPDATE bottletprecord set pick=" + std::to_string(stoi(j[0]["pick"].get<std::string>()) + 1) + " where date=\"" + cqhttp_api::utils::unixTime2DateStr(time(NULL)) + "\"");
-		//	}
-		//	else {
-		//		this->Update("UPDATE bottletprecord set throw=" + std::to_string(stoi(j[0]["throw"].get<std::string>()) + 1) + " where date=\"" + cqhttp_api::utils::unixTime2DateStr(time(NULL)) + "\"");
-		//	}
-		//}
-
-		//void setNewPickThrowRecord() {
-		//	//json j;
-		//	//try { j = this->Select("SELECT * FROM bottletprecord where date=\"" + cqhttp_api::utils::unixTime2DateStr(time(NULL) - 86400) + "\""); }
-		//	//catch (osucat::database_exception) {/*j[0]["pick"] = "0";j[0]["throw"] = "0";*/ }
-		//	this->Insert("INSERT INTO bottletprecord (date) values (\"" + cqhttp_api::utils::unixTime2DateStr(time(NULL)) + "\")");
-		//}
-
-		//int getBottleID(int64_t sender, string message, time_t time) {
-		//	try {
-		//		string query = "SELECT id FROM bottlemsgrecord where sendtime=" + std::to_string(time) + " AND sender=" + std::to_string(sender) + " AND message=\"" + message + "\"";
-		//		json j = this->Select(query);
-		//		return stoi(j[0]["id"].get<std::string>());
-		//	}
-		//	catch (osucat::database_exception) {
-		//		return 0;
-		//	}
-		//}
-
-		//bool reloadAdmin() {
-		//	string query = "SELECT * FROM info where role=1 or role=2";
-		//	try {
-		//		json j = this->Select(query);
-		//		adminlist.clear();
-		//		for (int i = 0; i < j.size(); ++i) {
-		//			admins s;
-		//			s.user_id = stoll(j[i]["qq"].get<std::string>());
-		//			s.role = stoi(j[i]["role"].get<std::string>());
-		//			adminlist.push_back(s);
-		//		}
-		//		return true;
-		//	}
-		//	catch (osucat::database_exception) {
-		//		return false;
-		//	}
-		//}
-
-
-		//bool setNewBadge(Badgeinfo bi, int* id) {
-		//	string query = "INSERT INTO badge_list (name,name_chinese,description) VALUES (\"" + bi.name + "\",\"" + bi.name_chinese + "\",\"" + bi.description + "\")";
-		//	try {
-		//		this->Insert(query);
-		//		json j = this->Select("Select id from badge_list");
-		//		*id = j.size() - 1;
-		//		return true;
-		//	}
-		//	catch (osucat::database_exception) {
-		//		*id = -1;
-		//	}
-		//	return false;
-		//}
-
-		///*
-		//int f
-		//1 = set name
-		//2 = set describetion
-		//*/
-		//bool changeBadgeInfo(Badgeinfo bi, int f) {
-		//	string query;
-		//	if (f = 1) {
-		//		query = "UPDATE badge_list set name=\"" + bi.name + "\" where id=" + std::to_string(bi.id);
-		//	}
-		//	else if (f = 2) {
-		//		query = "UPDATE badge_list set description=\"" + bi.description + "\" where id=" + std::to_string(bi.id);
-		//	}
-		//	else return false;
-		//	try {
-		//		this->Update(query);
-		//		return true;
-		//	}
-		//	catch (osucat::database_exception) {
-		//		return false;
-		//	}
-		//}
-
-
-
-		///*
-		//int f
-		//1 = update name
-		//2 = update name_chinese
-		//3 = update description
-		//*/
-
-		//bool updatebadgeinfo(Badgeinfo bi, int f) {
-		//	if (f > 3 || f < 1) {
-		//		return false;
-		//	}
-		//	string query;
-		//	if (f = 1) {
-		//		query = u8"UPDATE badge_list set name=\"" + bi.name + "\" where id=" + std::to_string(bi.id);
-		//	}
-		//	else if (f = 2) {
-		//		query = u8"UPDATE badge_list set name_chinese=\"" + bi.name_chinese + "\" where id=" + std::to_string(bi.id);
-		//	}
-		//	else if (f = 3) {
-		//		query = u8"UPDATE badge_list set description=\"" + bi.description + "\" where id=" + std::to_string(bi.id);
-		//	}
-		//	try {
-		//		this->Update(query);
-		//		return true;
-		//	}
-		//	catch (osucat::database_exception) {
-		//		return false;
-		//	}
-		//}
 
 		//vector<osucat::steamcheck::CSGOUserInfo> steam_get_csgo_listen_list() {
 		//	vector <osucat::steamcheck::CSGOUserInfo> cui;
@@ -1010,7 +873,6 @@ namespace osucat {
 		//	else {
 		//		query += "\"" + std::to_string(ReceiveGroupId) + "\")";
 		//	}
-
 		//	try {
 		//		this->Insert(query);
 		//	}
@@ -1044,7 +906,6 @@ namespace osucat {
 		//		else {
 		//			this->Update("UPDATE `steam-ban-check` SET ReceiveGroupId=\"" + tmp + ";" + std::to_string(ReceiveGroupId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId));
 		//		}
-
 		//		return true;
 		//	}
 		//}
@@ -1085,17 +946,5 @@ namespace osucat {
 	private:
 		MYSQL conn;
 	};
-
-
-
 }
-
-
-
-
-
-
-
-
-
 #endif

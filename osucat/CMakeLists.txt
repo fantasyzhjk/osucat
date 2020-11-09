@@ -26,7 +26,7 @@ add_executable (osucat
 "src/include/winhttp.hpp"
 "src/include/mysql.hpp"
 "src/message.h"
-"src/image.hpp" "src/badge.hpp")
+"src/image.hpp" "src/badge.hpp" "src/addons.hpp" "src/games/hangman.hpp")
 
 # TODO: 如有需要，请添加测试并安装目标。
 

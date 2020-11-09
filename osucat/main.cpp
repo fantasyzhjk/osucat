@@ -9,19 +9,16 @@ int main()
 	sprintf_s(wshost, "%s", "127.0.0.1");
 	sprintf_s(output_prefix, "%s", "[osucat]");
 	wsport = 6700;
-	cout << "Hello CMake." << endl;
-	old_code_page = GetConsoleCP(); //保存当前控制台代码页
+	old_code_page = GetConsoleCP();
 	SetConsoleCP(CP_UTF8);
 	SetConsoleOutputCP(CP_UTF8);
-	// version infomation
-	cout << "Current version: 1.0b" << endl;
-	// initalizing
-	cout << "Initializing..." << endl;
 	GetCurrentDirectory(512, OC_ROOT_PATH);
 	SetCurrentDirectory(OC_ROOT_PATH);
-	Magick::InitializeMagick(OC_ROOT_PATH);
+	cout << "Current version: 1.0" << endl;
 	cout << "root path: " << OC_ROOT_PATH << endl;
 	if (OC_IS_ACTIVE) {
+		cout << "Initializing..." << endl;
+		Event::on_startup(); //初始化
 		cout << u8"准备完成，正在尝试连接.." << endl;
 	A:
 		sprintf_s(wsfulladdress, "ws://%s:%d/", wshost, wsport);

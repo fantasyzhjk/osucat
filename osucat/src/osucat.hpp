@@ -2,37 +2,29 @@
 #ifndef OC_MAIN_HPP
 #define OC_MAIN_HPP
 
+using namespace std;
+using namespace cqhttp_api;
+
 #include "include/oppai-cpp/oppai.hpp"
 #include "message.h"
 #include "include/osu_api.hpp"
 #include "badge.hpp"
 #include "include/mysql.hpp"
 #include "image.hpp"
-
-using namespace std;
-using namespace cqhttp_api;
+#include "addons.hpp"
 
 namespace osucat {
-	class CmdParser {
-	public:
-		static void parser(const Target tar, const GroupSender sdr) {
-			if (tar.message.find("[CQ:image,file=") != string::npos) {
-				string tmp = utils::GetMiddleText(tar.message, "[CQ:image,file=", ",url=http");
-				cout << tmp;
-				cqhttp_api::getImage(tmp);
-			}
-		}
-	};
-
 
 	class Main {
+
 	public:
-		static void getcallcount(Target tar) {
+		static void getcallcount(const Target tar) {
 			Database db;
 			db.Connect();
 			send_message(tar, u8"猫猫从0.4版本开始，主要功能至今一共被调用了 " + std::to_string(db.Getcallcount()) + u8" 次。");
 		}
-		static void help(Target tar) {
+
+		static void help(const Target tar) {
 			string cmd = tar.message.substr(4);
 			utils::string_trim(cmd);
 			utils::string_replace(cmd, " ", "");
@@ -60,16 +52,19 @@ namespace osucat {
 			send_message(tar, u8"[CQ:image,file=osucat\\help\\帮助.png]");
 			return;
 		}
-		static void about(Target tar) {
+
+		static void about(const Target tar) {
 			send_message(tar, u8"[CQ:image,file=osucat\\help\\about.png]");
 		}
-		static void contact(Target tar) {
+
+		static void contact(const Target tar) {
 			string cmd = tar.message.substr(7);
 			utils::string_trim(cmd);
 			send_message(tar, u8"[CQ:at,qq=" + to_string(tar.user_id) + u8"] 你想传达的话已成功传达给麻麻了哦。");
 			cqhttp_api::send_private_message(owner_userid, u8"收到来自用户 " + to_string(tar.user_id) + u8" 的消息：" + cmd);
 		}
-		static void ping(Target tar) {
+
+		static void ping(const Target tar) {
 			vector<string> rtnmsg;
 			rtnmsg.push_back("pong");
 			rtnmsg.push_back("paw");
@@ -80,7 +75,8 @@ namespace osucat {
 			rtnmsg.push_back("喵");
 			send_message(tar, rtnmsg[utils::randomNum(0, rtnmsg.size() - 1)]);
 		}
-		static void setid(Target tar) {
+
+		static void setid(const Target tar) {
 			string cmd = utils::unescape(tar.message.substr(5));
 			utils::string_trim(cmd);
 			if (cmd.length() > 20) {
@@ -138,7 +134,8 @@ namespace osucat {
 			}
 			info(tar);
 		};
-		static void unsetid(Target tar) {
+
+		static void unsetid(const Target tar) {
 			string cmd = tar.message.substr(5);
 			utils::string_trim(cmd);
 			Database db;
@@ -179,7 +176,8 @@ namespace osucat {
 				}
 			}
 		}
-		static void info(Target tar) {
+
+		static void info(const Target tar) {
 			string cmd = tar.message;
 			if (_stricmp(cmd.substr(0, 6).c_str(), u8"因佛") == 0) {
 				cmd = cmd.substr(0, 6);
@@ -437,15 +435,14 @@ namespace osucat {
 			send_message(tar, u8"[CQ:image,file=" + fileStr + u8"]");
 			utils::_DelayDelTmpFile(to_string(OC_ROOT_PATH) + "\\data\\images\\" + fileStr);
 		}
+
 		// TODO: textinfo with data comparison
-		static void recent(Target tar) {
+
+		static void recent(const Target tar) {
 			string cmd;
-			if (_stricmp(tar.message.substr(0, 6).c_str(), "recent") == 0) {
-				cmd = tar.message.substr(6);
-			}
-			else {
-				cmd = tar.message.substr(2);
-			}
+			if (_stricmp(tar.message.substr(0, 6).c_str(), "recent") == 0) { cmd = tar.message.substr(6); }
+			else if (_stricmp(tar.message.substr(0, 2).c_str(), "pr") == 0) { cmd = tar.message.substr(2); }
+			else return;
 			Database db;
 			db.Connect();
 			db.addcallcount();
@@ -704,7 +701,8 @@ namespace osucat {
 			db.osu_UpdatePPRecord(tar.user_id, sp_data.score_info.beatmap_id);
 			utils::_DelayDelTmpFile(to_string(OC_ROOT_PATH) + "\\data\\images\\" + fileStr);
 		}
-		static void bp(Target tar) {
+
+		static void bp(const Target tar) {
 			string cmd = tar.message.substr(2);
 			Database db;
 			db.Connect();
@@ -1035,7 +1033,8 @@ namespace osucat {
 			db.osu_UpdatePPRecord(tar.user_id, sp_data.score_info.beatmap_id);
 			utils::_DelayDelTmpFile(to_string(OC_ROOT_PATH) + "\\data\\images\\" + fileStr);
 		}
-		static void score(Target tar) {
+
+		static void score(const Target tar) {
 			string cmd = tar.message.substr(5);
 			utils::string_replace(cmd, " ", "");
 			if (!utils::isNum(cmd)) {
@@ -1150,7 +1149,8 @@ namespace osucat {
 			db.osu_UpdatePPRecord(tar.user_id, sp_data.beatmap_info.beatmap_id);
 			utils::_DelayDelTmpFile(to_string(OC_ROOT_PATH) + "\\data\\images\\" + fileStr);
 		}
-		static void update(Target tar) {
+
+		static void update(const Target tar) {
 			Database db;
 			db.Connect();
 			db.addcallcount();
@@ -1184,7 +1184,8 @@ namespace osucat {
 			}
 			info(tar);
 		}
-		static void pp(Target tar) {
+
+		static void pp(const Target tar) {
 			string cmd = tar.message.substr(2);
 			utils::string_replace(cmd, " ", "");
 			if (!utils::isNum(cmd)) {
@@ -1258,7 +1259,8 @@ namespace osucat {
 				("https://osu.ppy.sh/b/" + cmd).c_str());
 			cqhttp_api::send_message(tar, message);
 		}
-		static void ppwith(Target tar) {
+
+		static void ppwith(const Target tar) {
 			string cmd = tar.message.substr(4);
 			if (cmd.length() > 15) {
 				cqhttp_api::send_message(tar, 所提供的参数超出长度限制);
@@ -1341,7 +1343,8 @@ namespace osucat {
 				("https://osu.ppy.sh/b/" + to_string(bid)).c_str());
 			cqhttp_api::send_message(tar, message);
 		}
-		static void rctpp(Target tar) {
+
+		static void rctpp(const Target tar) {
 			Database db;
 			db.Connect();
 			db.addcallcount();
@@ -1745,7 +1748,8 @@ namespace osucat {
 			cqhttp_api::send_message(tar, message);
 			db.osu_UpdatePPRecord(tar.user_id, sp_data.beatmap_info.beatmap_id);
 		}
-		static void setmode(Target tar) {
+
+		static void setmode(const Target tar) {
 			string cmd = tar.message.substr(7);
 			utils::string_replace(cmd, " ", "");
 			if (!utils::isNum(cmd)) {
@@ -1777,7 +1781,8 @@ namespace osucat {
 				break;
 			}
 		}
-		static void bphead_tail(Target tar) {
+
+		static void bphead_tail(const Target tar) {
 			string cmd = tar.message.substr(4);
 			utils::string_trim(cmd);
 			cmd = utils::unescape(cmd);
@@ -1953,7 +1958,8 @@ namespace osucat {
 				totalvalue / 100);
 			cqhttp_api::send_message(tar, message);
 		}
-		static void ppvs(Target tar) {
+
+		static void ppvs(const Target tar) {
 			string cmd = tar.message.substr(4);
 			utils::string_trim(cmd);
 			cmd = utils::unescape(cmd);
@@ -2007,7 +2013,8 @@ namespace osucat {
 			cqhttp_api::send_message(tar, u8"[CQ:image,file=" + fileStr + u8"]");
 			utils::_DelayDelTmpFile(to_string(OC_ROOT_PATH) + "\\data\\images\\" + fileStr);
 		}
-		static void badgelist(Target tar) {
+
+		static void badgelist(const Target tar) {
 			int64_t uid;
 			Database db;
 			db.Connect();
@@ -2030,7 +2037,8 @@ namespace osucat {
 			}
 			cqhttp_api::send_message(tar, message);
 		}
-		static void occost(Target tar) {
+
+		static void occost(const Target tar) {
 			string cmd = utils::unescape(tar.message.substr(6));
 			utils::string_trim(cmd);
 			utils::string_replace(cmd, u8"：", ":");
@@ -2105,7 +2113,8 @@ namespace osucat {
 			sprintf_s(message, 512, u8"在猫猫杯S1中，%s 的cost为：%.2f", UI.user_info.username.c_str(), c);
 			cqhttp_api::send_message(tar, message);
 		}
-		static void searchuid(Target tar) {
+
+		static void searchuid(const Target tar) {
 			string cmd = utils::unescape(tar.message.substr(9));
 			utils::string_trim(cmd);
 			utils::string_replace(cmd, u8"：", ":");
@@ -2155,7 +2164,8 @@ namespace osucat {
 			}
 			cqhttp_api::send_message(tar, UI.user_info.username + u8" 的osu!uid为 " + to_string(UI.user_info.user_id));
 		}
-		static void bonuspp(Target tar) {
+
+		static void bonuspp(const Target tar) {
 			Database db;
 			db.Connect();
 			db.addcallcount();
@@ -2374,7 +2384,8 @@ namespace osucat {
 				rankedscores);
 			cqhttp_api::send_message(tar, rtnmessage);
 		}
-		static void setbadge(Target tar) {
+
+		static void setbadge(const Target tar) {
 			string cmd = tar.message.substr(8);
 			int64_t uid;
 			Database db;
@@ -2418,7 +2429,8 @@ namespace osucat {
 			}
 			cqhttp_api::send_message(tar, u8"你未拥有此奖章。");
 		}
-		static void setbanner_v1(Target tar) {
+
+		static void setbanner_v1(const Target tar) {
 			string cmd = tar.message.substr(9);
 			if (cmd.find("[CQ:image,file=") == string::npos) {
 				cqhttp_api::send_message(tar, 自定义Banner帮助);
@@ -2462,7 +2474,8 @@ namespace osucat {
 				+ u8" ,请尽快审核哦。\r\nbanner内容：\r\n"
 				+ "[CQ:image,file=" + filepath.substr(14) + "]");
 		}
-		static void setinfopanel_v1(Target tar) {
+
+		static void setinfopanel_v1(const Target tar) {
 			string cmd = tar.message.substr(12);
 			if (cmd.find("[CQ:image,file=") == string::npos) {
 				cqhttp_api::send_message(tar, 自定义InfoPanel帮助);
@@ -2503,7 +2516,8 @@ namespace osucat {
 				+ u8" ,请尽快审核哦。\r\nInfoPanel内容：\r\n"
 				+ "[CQ:image,file=osucat\\custom\\infopanel_verify\\" + to_string(UserID) + ".png]");
 		}
-		static void resetbanner_v1(Target tar) {
+
+		static void resetbanner_v1(const Target tar) {
 			Database db;
 			db.Connect();
 			db.addcallcount();
@@ -2512,7 +2526,8 @@ namespace osucat {
 			DeleteFileA(picPath.c_str());
 			cqhttp_api::send_message(tar, u8"已成功重置你的banner。");
 		}
-		static void resetinfopanel_v1(Target tar) {
+
+		static void resetinfopanel_v1(const Target tar) {
 			Database db;
 			db.Connect();
 			db.addcallcount();
@@ -2521,7 +2536,8 @@ namespace osucat {
 			DeleteFileA(picPath.c_str());
 			cqhttp_api::send_message(tar, u8"已成功重置你的info面板。");
 		}
-		static void switchfunction(Target tar, GroupSender sdr) {
+
+		static void switchfunction(const Target tar, const GroupSender sdr) {
 			string cmd = tar.message.substr(6);
 			if (tar.type != Target::Type::GROUP) {
 				cqhttp_api::send_message(tar, u8"此操作必须在群内完成。");
@@ -2659,7 +2675,8 @@ namespace osucat {
 			cqhttp_api::send_message(tar, 参数不正确);
 			return;
 		}
-		static void getbadgeinfo(Target tar) {
+
+		static void getbadgeinfo(const Target tar) {
 			string cmd = tar.message.substr(12);
 			utils::string_trim(cmd);
 			int badge;
@@ -2681,19 +2698,890 @@ namespace osucat {
 			}
 		}
 
+		static void outputcallcount(const Target tar) {
+			Database db;
+			db.Connect();
+			send_message(tar, u8"猫猫从0.4版本开始，主要功能至今一共被调用了 " + to_string(db.Getcallcount()) + u8" 次。");
+		}
+	};
+
+	class Admin {
+
+	public:
+
+		static void adoptbanner_v1(const Target tar) {
+			string UserID = tar.message.substr(11);
+			utils::string_trim(UserID);
+			string picPath = ".\\data\\images\\osucat\\custom\\banner_verify\\" + UserID + ".jpg";
+			if (utils::fileExist(picPath) == true) {
+				if (utils::copyFile(
+					".\\data\\images\\osucat\\custom\\banner_verify\\" + UserID
+					+ ".jpg",
+					"./work/v1_cover/" + UserID + ".jpg")
+					== true) {
+					DeleteFileA(picPath.c_str());
+					Database db;
+					db.Connect();
+					int64_t QQ = db.osu_getqq(stoll(UserID));
+					send_private_message(QQ, u8"你上传的Banner通过审核啦，可以使用info指令查看~");
+					send_message(tar, u8"ID：" + UserID + u8" ，已成功通知用户Banner已审核成功。");
+					if (tar.group_id != management_groupid) { send_group_message(management_groupid, u8"ID：" + UserID + u8" ，已成功通知用户Banner已审核成功。"); }
+				}
+				else {
+					send_message(tar, u8"在移动文件时发生了一个错误。");
+				}
+			}
+			else {
+				send_message(tar, u8"此用户的内容不在待审核清单内。");
+			}
+		}
+
+		static void adoptinfopanel_v1(const Target tar) {
+			string UserID = tar.message.substr(14);
+			utils::string_trim(UserID);
+			string picPath =
+				".\\data\\images\\osucat\\custom\\infopanel_verify\\" + UserID + ".png";
+			if (utils::fileExist(picPath) == true) {
+				if (utils::copyFile(
+					".\\data\\images\\osucat\\custom\\infopanel_verify\\"
+					+ UserID + ".png",
+					"./work/v1_infopanel/" + UserID + ".png")
+					== true) {
+					DeleteFileA(picPath.c_str());
+					Database db;
+					db.Connect();
+					int64_t QQ = db.osu_getqq(stoll(UserID));
+					send_private_message(tar, u8"你上传的Info面板通过审核啦，可以使用info指令查看~");
+					send_message(tar, u8"ID：" + UserID + u8" ，已成功通知用户InfoPanel已审核成功。");
+					if (tar.group_id != management_groupid) { send_group_message(management_groupid, u8"ID：" + UserID + u8" ，已成功通知用户InfoPanel已审核成功。"); }
+				}
+				else {
+					send_message(tar, u8"在移动文件时发生了一个错误。");
+				}
+			}
+			else {
+				send_message(tar, u8"此用户的内容不在待审核清单内。");
+			}
+		}
+
+		static void rejectbanner_v1(const Target tar) {
+			string UserID, Content, cmd = tar.message.substr(12);
+			if (cmd.find('#') != string::npos) {
+				string tmp = cmd;
+				utils::string_trim(tmp);
+				UserID = tmp.substr(0, tmp.find('#'));
+				Content = tmp.substr(tmp.find("#") + 1);
+				if (Content.length() < 1) {
+					Content = u8"未提供详情。";
+				}
+			}
+			else {
+				UserID = cmd;
+				utils::string_trim(UserID);
+				Content = u8"未提供详情。";
+			}
+			string picPath = ".\\data\\images\\osucat\\custom\\banner_verify\\" + UserID + ".jpg";
+			if (utils::fileExist(picPath) == true) {
+				DeleteFileA(picPath.c_str());
+				Database db;
+				db.Connect();
+				int64_t QQ = db.osu_getqq(stoll(UserID));
+				send_private_message(QQ, u8"你上传的Banner已被管理员驳回，详情：" + Content);
+				send_message(tar, "ID：" + UserID + u8" ，已成功通知用户Banner已被驳回。详情：" + Content);
+				if (tar.group_id != management_groupid) { send_group_message(management_groupid, "ID：" + UserID + u8" ，已成功通知用户Banner已被驳回。详情：" + Content); }
+			}
+			else {
+				send_message(tar, u8"此用户的内容不在待审核清单内。");
+			}
+		}
+
+		static void rejectinfopanel_v1(const Target tar) {
+			string UserID, Content, cmd = tar.message.substr(15);
+			if (cmd.find('#') != string::npos) {
+				string tmp = cmd;
+				utils::string_trim(tmp);
+				UserID = tmp.substr(0, tmp.find('#'));
+				Content = tmp.substr(tmp.find("#") + 1);
+				if (Content.length() < 1) {
+					Content = u8"未提供详情。";
+				}
+			}
+			else {
+				UserID = cmd;
+				utils::string_trim(UserID);
+				Content = u8"未提供详情。";
+			}
+			string picPath = ".\\data\\images\\osucat\\custom\\infopanel_verify\\" + UserID + ".png";
+			if (utils::fileExist(picPath) == true) {
+				DeleteFileA(picPath.c_str());
+				Database db;
+				db.Connect();
+				int64_t QQ = db.osu_getqq(stoll(UserID));
+				Target activepushTar;
+				send_private_message(QQ, u8"你上传的InfoPanel已被管理员驳回，详情：" + Content);
+				send_message(tar, "ID：" + UserID + u8" ，已成功通知用户InfoPanel已被驳回。详情：" + Content);
+				if (tar.group_id != management_groupid) { send_group_message(management_groupid, "ID：" + UserID + u8" ，已成功通知用户InfoPanel已被驳回。详情：" + Content); }
+			}
+			else {
+				send_message(tar, u8"此用户的内容不在待审核清单内。");
+			}
+		}
+
+		static void resetuser(const Target tar) {
+			string UserID, Content, cmd = tar.message.substr(9);
+			if (cmd.find('#') != string::npos) {
+				string tmp = cmd;
+				utils::string_trim(tmp);
+				UserID = tmp.substr(0, tmp.find('#'));
+				Content = tmp.substr(tmp.find("#") + 1);
+				if (Content.length() < 1) {
+					Content = "未提供详情。";
+				}
+			}
+			else {
+				UserID = cmd;
+				utils::string_trim(UserID);
+				Content = "未提供详情。";
+			}
+			Database db;
+			db.Connect();
+			db.addcallcount();
+			int64_t QQ = db.osu_getqq(stoll(UserID));
+			if (!QQ == 0) {
+				try {
+					DeleteFileA(("./work/v1_cover/" + UserID + ".jpg").c_str());
+				}
+				catch (exception) {
+				}
+				try {
+					DeleteFileA(("./work/v1_infopanel/" + UserID + ".jpg").c_str());
+				}
+				catch (exception) {
+				}
+				send_private_message(QQ, u8"你的个人资料已被重置，详情：" + Content);
+				send_message(tar, "ID：" + UserID + u8" ，已成功通知用户他的个人资料已被重置。详情：" + Content);
+				if (tar.group_id != management_groupid) { send_group_message(management_groupid, "ID：" + UserID + u8" ，已成功通知用户他的个人资料已被重置。详情：" + Content); }
+			}
+			else {
+				send_message(tar, u8"找不到此用户。");
+			}
+		}
+
+		static void addbadge(const Target tar) {
+			string args = tar.message.substr(8);
+			utils::string_trim(args);
+			int64_t uid;
+			int badgeid;
+			try {
+				uid = stoll(args.substr(0, args.find(',')));
+			}
+			catch (std::exception) {
+				send_message(tar, u8"参数错误");
+				return;
+			}
+			try {
+				badgeid = stoi(args.substr(args.find(',') + 1));
+			}
+			catch (std::exception) {
+				send_message(tar, u8"参数错误");
+				return;
+			}
+			if (badgeid == BADGENOTFOUND) {
+				send_message(tar, u8"未找到此徽章");
+				return;
+			}
+			Database db;
+			db.Connect();
+			db.addcallcount();
+			string temp = "";
+			vector<int> tmp = db.osu_GetBadgeList(uid);
+			if (tmp.size() > 0) {
+				for (size_t i = 0; i < tmp.size(); ++i) {
+					temp += to_string(tmp[i]) + ",";
+				}
+				temp += to_string(badgeid);
+			}
+			else {
+				temp = to_string(badgeid);
+			}
+			db.osu_addbadge(uid, temp);
+			send_message(tar, u8"已成功提交。");
+		}
+
+		static void blockuser(const Target tar) {
+			string cmd = tar.message.substr(5);
+			utils::string_trim(cmd);
+			try {
+				Database db;
+				db.Connect();
+				if (db.add_blacklist(stoll(cmd))) {
+					send_message(tar, u8"用户 " + cmd + u8" 已成功被列入黑名单");
+					if (tar.group_id != management_groupid) { send_group_message(management_groupid, u8"用户 " + cmd + u8" 已成功被列入黑名单"); }
+				}
+				else {
+					send_message(tar, u8"用户 " + cmd + u8" 已存在于黑名单中");
+				}
+			}
+			catch (std::exception) {
+				send_message(tar, u8"请提供纯数字qq，不要掺杂中文。");
+			}
+		}
+
+		static void setnewbadge(const Target tar) {
+			string cmd = tar.message.substr(11);
+			if (cmd.find("CQ:image,file=") != string::npos) {
+				vector<string> tmp;
+				tmp = utils::string_split(cmd, '#');
+				if (tmp.size() != 4) {
+					send_message(tar, u8"参数不正确，请按照以下格式提交：\nbadge图像#英文名称#中文名称#详细信息");
+					return;
+				}
+				Badgeinfo bi;
+				bi.name = tmp[1];
+				bi.name_chinese = tmp[2];
+				bi.description = tmp[3];
+				Database db;
+				db.Connect();
+				int* id;
+				if (db.osu_setNewBadge(bi, id)) {
+					string picPath;
+					picPath = utils::GetMiddleText(cmd, "[CQ:image,file=", ",url");
+					picPath = picPath.substr(picPath.find(',') + 6);
+					PictureInfo p = getImage(picPath);
+					picPath = ".\\data\\cache\\" + picPath + "." + p.format;
+					if (!utils::copyFile(picPath, ".\\work\\badges\\" + to_string(*id) + ".png")) {
+						DeleteFileA((".\\work\\badges\\" + to_string(*id) + ".png").c_str());
+						send_message(tar, u8"移动文件失败");
+						return;
+					}
+					if (!utils::copyFile(picPath, ".\\data\\images\\osucat\\badges\\" + to_string(*id) + ".png")) {
+						DeleteFileA((".\\data\\images\\osucat\\badges\\" + to_string(*id) + ".png").c_str());
+						send_message(tar, u8"移动文件失败");
+						return;
+					}
+					string tmp = u8"已成功提交。\n[CQ:image,file=osucat\\badges\\" + to_string(bi.id) +
+						".png]\nID: " + to_string(bi.id) + u8"\n名称: " + bi.name_chinese + "(" + bi.name +
+						u8")\n描述: " + bi.description;
+					send_message(tar, tmp);
+					if (tar.group_id != management_groupid) { send_group_message(management_groupid, tmp); }
+					return;
+				}
+				else {
+					send_message(tar, u8"添加badge失败");
+					return;
+				}
+			}
+			else {
+				send_message(tar, u8"请随附badge图像");
+			}
+		}
+
+		static void updatebadgeinfo(const Target tar) {
+			string cmd = tar.message.substr(15);
+			utils::string_trim(cmd);
+			if (cmd.length() < 3) {
+				send_message(tar, u8"请提供参数\n1=英文名称\n2=中文名称\n3=详细信息\n4=badge图像\n格式： 2#徽章ID#中文徽章名称");
+				return;
+			}
+			vector<string>tmp = utils::string_split(cmd, '#');
+			if (tmp.size() != 3) {
+				send_message(tar, u8"提供了过多的参数！\n1=英文名称\n2=中文名称\n3=详细信息\n4=badge图像\n格式： 2#徽章ID#中文徽章名称");
+				return;
+			}
+			if (!utils::isNum(tmp[0])) {
+				send_message(tar, u8"参数1必须为数字！\n1=英文名称\n2=中文名称\n3=详细信息\n4=badge图像\n格式： 2#徽章ID#中文徽章名称");
+				return;
+			}
+			if (!utils::isNum(tmp[1])) {
+				send_message(tar, u8"参数2必须为数字！\n1=英文名称\n2=中文名称\n3=详细信息\n4=badge图像\n格式： 2#徽章ID#中文徽章名称");
+				return;
+			}
+			Badgeinfo bi;
+			bi.id = stoi(tmp[1]);
+			Database db;
+			db.Connect();
+			if (tmp[0] == "1") {
+				bi.name = tmp[2];
+				if (db.osu_updatebadgeinfo(bi, 1)) {
+					send_message(tar, u8"更新成功\n[CQ:image,file=osucat\\badges\\" + to_string(bi.id) + ".png]\nID: " + to_string(bi.id) + u8"\n名称: " + bi.name_chinese + "(" + bi.name + u8")\n描述: " + bi.description);
+					if (tar.group_id != management_groupid) { send_group_message(management_groupid, u8"badge名称已更新：\n[CQ:image,file=osucat\\badges\\" + to_string(bi.id) + ".png]\nID: " + to_string(bi.id) + u8"\n名称: " + bi.name_chinese + "(" + bi.name + u8")\n描述: " + bi.description); }
+					return;
+				}
+				else {
+					send_message(tar, u8"更新失败");
+					return;
+				}
+			}
+			else if (tmp[0] == "2") {
+				bi.name_chinese = tmp[2];
+				if (db.osu_updatebadgeinfo(bi, 2)) {
+					send_message(tar, u8"更新成功\n[CQ:image,file=osucat\\badges\\" + to_string(bi.id) + ".png]\nID: " + to_string(bi.id) + u8"\n名称: " + bi.name_chinese + "(" + bi.name + u8")\n描述: " + bi.description);
+					if (tar.group_id != management_groupid) { send_group_message(management_groupid, u8"badge名称(中文)已更新：\n[CQ:image,file=osucat\\badges\\" + to_string(bi.id) + ".png]\nID: " + to_string(bi.id) + u8"\n名称: " + bi.name_chinese + "(" + bi.name + u8")\n描述: " + bi.description); }
+					return;
+				}
+				else {
+					send_message(tar, u8"更新失败");
+					return;
+				}
+			}
+			else if (tmp[0] == "3") {
+				bi.description = tmp[2];
+				if (db.osu_updatebadgeinfo(bi, 3)) {
+					send_message(tar, u8"更新成功\n[CQ:image,file=osucat\\badges\\" + to_string(bi.id) + ".png]\nID: " + to_string(bi.id) + u8"\n名称: " + bi.name_chinese + "(" + bi.name + u8")\n描述: " + bi.description);
+					if (tar.group_id != management_groupid) { send_group_message(management_groupid, u8"badge详情已更新：\n[CQ:image,file=osucat\\badges\\" + to_string(bi.id) + ".png]\nID: " + to_string(bi.id) + u8"\n名称: " + bi.name_chinese + "(" + bi.name + u8")\n描述: " + bi.description); }
+					return;
+				}
+				else {
+					send_message(tar, u8"更新失败");
+					return;
+				}
+			}
+			else if (tmp[0] == "4") {
+				if (cmd.find("CQ:image,file=") == string::npos) {
+					send_message(tar, u8"请随附更改后的badge图像");
+					return;
+				}
+				string picPath = utils::GetMiddleText(cmd, "[CQ:image,file=", ",url");
+				PictureInfo p = getImage(picPath);
+				if (!utils::copyFile(picPath, ".\\work\\badges\\" + to_string(bi.id) + ".png")) {
+					DeleteFileA((".\\work\\badges\\" + to_string(bi.id) + ".png").c_str());
+					send_message(tar, u8"移动文件失败");
+					return;
+				}
+				send_message(tar, u8"更新成功\n[CQ:image,file=osucat\\badges\\" + to_string(bi.id) + ".png]\nID: " + to_string(bi.id) + u8"\n名称: " + bi.name_chinese + "(" + bi.name + u8")\n描述: " + bi.description);
+				if (tar.group_id != management_groupid) { send_group_message(management_groupid, u8"badge图像已更新：\n[CQ:image,file=osucat\\badges\\" + to_string(bi.id) + ".png]\nID: " + to_string(bi.id) + u8"\n名称: " + bi.name_chinese + "(" + bi.name + u8")\n描述: " + bi.description); }
+			}
+		}
+
+		static void removebottle(const Target tar) {
+			string returnmsg = "null", cmd = tar.message.substr(8);
+			utils::string_trim(cmd);
+			utils::string_replace(cmd, u8"；", ";");
+			if (cmd.find(";") != string::npos) {
+				Database db;
+				db.Connect();
+				vector<string> splittmp;
+				splittmp = utils::string_split(cmd, ';');
+				for (int a = 0; a < splittmp.size(); ++a) {
+					int i;
+					if (splittmp[a].find('#') != string::npos) {
+						i = stoi(splittmp[a].substr(0, splittmp[a].find('#')));
+						returnmsg = splittmp[a].substr(splittmp[a].find('#') + 1);
+					}
+					else {
+						try { i = stoi(splittmp[a]); }
+						catch (std::exception) { send_message(tar, u8"参数错误"); }
+					}
+					json j = db.getBottleByID(i);
+					addons::driftingBottle dfb;
+					if (j.size() == 1) {
+						dfb.nickname = j[0]["nickname"].get<std::string>();
+						dfb.sender = stoll(j[0]["sender"].get<std::string>());
+						dfb.sendTime = stoll(j[0]["sendtime"].get<std::string>());
+						string tmp;
+						returnmsg != "null" ?
+							tmp = u8"你发于 " + utils::unixTime2Str(dfb.sendTime) + u8" 的消息已被管理员删除。\n详情：" + returnmsg : tmp = u8"你发于 " + utils::unixTime2Str(dfb.sendTime) + u8" 的消息已被管理员删除。";
+						send_private_message(dfb.sender, tmp);
+					}
+					else { send_message(tar, u8"没有找到这个漂流瓶。"); }
+					if (returnmsg == "null") {
+						send_message(tar, u8"已移除ID为 " + to_string(i) + u8" 的漂流瓶"); Sleep(2000);
+						if (tar.group_id != management_groupid) { send_group_message(management_groupid, u8"已移除ID为 " + to_string(i) + u8" 的漂流瓶"); }
+					}
+					else {
+						send_message(tar, u8"已移除ID为 " + to_string(i) + u8" 的漂流瓶，并返回以下消息：" + returnmsg); Sleep(2000);
+						if (tar.group_id != management_groupid) { send_group_message(management_groupid, u8"已移除ID为 " + to_string(i) + u8" 的漂流瓶"); }
+					}
+					db.writeBottle(osucat::addons::driftingBottleDBEvent::DELETEBOTTLE, i, 0, 0, "", "");
+				}
+			}
+			else {
+				int i;
+				if (cmd.find('#') != string::npos) {
+					i = stoi(cmd.substr(0, cmd.find('#')));
+					returnmsg = cmd.substr(cmd.find('#') + 1);
+				}
+				else {
+					try { i = stoi(cmd); }
+					catch (std::exception) { send_message(tar, u8"参数错误"); return; }
+				}
+				Database db;
+				db.Connect();
+				json j = db.getBottleByID(i);
+				addons::driftingBottle dfb;
+				if (j.size() == 1) {
+					dfb.nickname = j[0]["nickname"].get<std::string>();
+					dfb.sender = stoll(j[0]["sender"].get<std::string>());
+					dfb.sendTime = stoll(j[0]["sendtime"].get<std::string>());
+					string tmp;
+					returnmsg != "null" ?
+						tmp = u8"你发于 " + utils::unixTime2Str(dfb.sendTime) + u8" 的消息已被管理员删除。\n详情：" + returnmsg : tmp = u8"你发于 " + utils::unixTime2Str(dfb.sendTime) + u8" 的消息已被管理员删除。";
+					send_private_message(dfb.sender, tmp);
+					Sleep(1000);
+				}
+				else { send_message(tar, u8"没有找到这个漂流瓶。"); return; }
+				string tmp;
+				returnmsg == "null" ?
+					tmp = u8"已移除ID为 " + to_string(i) + u8" 的漂流瓶" : tmp = u8"已移除ID为 " + to_string(i) + u8" 的漂流瓶，并返回以下消息：" + returnmsg;
+				send_message(tar, tmp);
+				if (tar.group_id != management_groupid) { send_group_message(management_groupid, tmp); }
+				db.writeBottle(osucat::addons::driftingBottleDBEvent::DELETEBOTTLE, i, 0, 0, "", "");
+			}
 
 
 
 
+		}
 
+		static void cleartemp(const Target tar) {
+			string cmd = tar.message; utils::string_trim(cmd);
+			if (cmd.length() < 3) { send_message(tar, u8"请提供参数。"); return; }
+			if (_stricmp(cmd.substr(0, 3).c_str(), "all") == 0) { system("del .\\work\\avatar\\*.png"); send_message(tar, u8"已成功提交。"); return; }
+			if (_stricmp(cmd.substr(0, 6).c_str(), "avatar") == 0) { system("del .\\work\\avatar\\*.png"); send_message(tar, u8"已成功提交。"); return; }
+			send_message(tar, u8"参数错误。");
+		}
+	};
 
+	class System {
 
+	public:
 
+		static void _UpdateManually(Target tar) {
+			char dugtmp[256];
+			send_message(tar, u8"正在启动更新");
+			if (tar.type == Target::Type::GROUP && tar.group_id != management_groupid)send_group_message(management_groupid, u8"管理员 " + to_string(tar.user_id) + u8" 手动发起了每日更新 正在启动更新");
+			sprintf_s(dugtmp, u8"[%s] %s[updater]：启动更新", utils::unixTime2Str(time(NULL)).c_str(), output_prefix);
+			cout << dugtmp << endl;
+			auto start = chrono::system_clock::now();
+			Database db;
+			db.Connect();
+			vector<int64_t> temp = db.GetUserSet();
+			db.Close();
+			char timeStr[30] = { 0 };
+			time_t now = time(NULL);
+			tm* tm_now = localtime(&now);
+			strftime(timeStr, sizeof(timeStr), "%Y-%m-%d 04:00:00", tm_now);
+			for (int i = 0; i < temp.size(); ++i) {
+				thread DUP(bind(&dailyUpdatePoster, i, temp[i], timeStr));
+				DUP.detach();
+				Sleep(3000);
+			}
+			auto end = chrono::system_clock::now();
+			auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
+			string message = u8"已完成，一共更新了 " + to_string(temp.size()) + u8" 个用户的数据，共耗时 "
+				+ utils::Duration2StrWithoutDAY(double(duration.count()) * chrono::microseconds::period::num
+					/ chrono::microseconds::period::den);
+			send_message(tar, message);
+			if (tar.type == Target::Type::GROUP && tar.group_id != management_groupid)send_group_message(management_groupid, message);
+			sprintf_s(dugtmp, u8"[%s] %s[updater]：%s", utils::unixTime2Str(time(NULL)).c_str(), output_prefix, message.c_str());
+		}
 
+		static void _DailyUpdate() {
+			cout << u8"osu!用户数据自动更新线程已创建" << endl;
+			char dugtmp[256];
+			while (true) {
+				time_t now = time(NULL);
+				tm* tm_now = localtime(&now);
+				char timeC[16] = { 0 };
+				strftime(timeC, sizeof(timeC), "%H", tm_now);
+				if (to_string(timeC).find("04") == string::npos) { Sleep(1000 * 60); }
+				else {
+					send_group_message(management_groupid, u8"正在启动更新");
+					try { system("del .\\work\\avatar\\*.png"); }
+					catch (std::exception) {}
+					sprintf_s(dugtmp, u8"[%s] %s[updater]：启动更新", utils::unixTime2Str(time(NULL)).c_str(), output_prefix);
+					cout << dugtmp << endl;
+					auto start = chrono::system_clock::now();
+					Database db;
+					db.Connect();
+					vector<int64_t> temp = db.GetUserSet();
+					db.Close();
+					char timeStr[30] = { 0 };
+					strftime(timeStr, sizeof(timeStr), "%Y-%m-%d 04:00:00", tm_now);
+					for (int i = 0; i < temp.size(); ++i) {
+						thread DUP(bind(&dailyUpdatePoster, i, temp[i], timeStr));
+						DUP.detach();
+						Sleep(3000);
+					}
+					auto end = chrono::system_clock::now();
+					auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
+					string message = u8"已完成，一共更新了 " + to_string(temp.size()) + u8" 个用户的数据，共耗时 "
+						+ utils::Duration2StrWithoutDAY(double(duration.count()) * chrono::microseconds::period::num
+							/ chrono::microseconds::period::den);
+					send_group_message(management_groupid, message);
+					sprintf_s(dugtmp, u8"[%s] %s[updater]：%s", utils::unixTime2Str(time(NULL)).c_str(), output_prefix, message.c_str());
+					Sleep(1000 * 60 * 60 * 21);
+				}
+			}
+		}
 
+		static void dailyUpdatePoster(int id, int64_t userid, const string& timeStr) {
+			osu_api::v1::user_info UI = { 0 };
+			Database db;
+			db.Connect();
+			try {
+				try {
+					if (osu_api::v1::api::GetUser(userid, osu_api::v1::mode::std, &UI) != 0) {
+						try {
+							db.AddUserData(&UI, timeStr);
+						}
+						catch (osucat::database_exception) {
+						}
+					}
+				}
+				catch (osucat::NetWork_Exception) {
+					try {
+						if (osu_api::v1::api::GetUser(userid, osu_api::v1::mode::std, &UI) != 0) {
+							try {
+								db.AddUserData(&UI, timeStr);
+							}
+							catch (osucat::database_exception) {
+							}
+						}
+					}
+					catch (osucat::NetWork_Exception) {
+						try {
+							if (osu_api::v1::api::GetUser(userid, osu_api::v1::mode::std, &UI) != 0) {
+								try {
+									db.AddUserData(&UI, timeStr);
+								}
+								catch (osucat::database_exception) {
+								}
+							}
+						}
+						catch (osucat::NetWork_Exception) {
+						}
+					}
+				}
+
+				try {
+					if (osu_api::v1::api::GetUser(userid, osu_api::v1::mode::taiko, &UI) != 0) {
+						try {
+							db.AddUserData(&UI, timeStr);
+						}
+						catch (osucat::database_exception) {
+						}
+					}
+				}
+				catch (osucat::NetWork_Exception) {
+					try {
+						if (osu_api::v1::api::GetUser(userid, osu_api::v1::mode::taiko, &UI) != 0) {
+							try {
+								db.AddUserData(&UI, timeStr);
+							}
+							catch (osucat::database_exception) {
+							}
+						}
+					}
+					catch (osucat::NetWork_Exception) {
+						try {
+							if (osu_api::v1::api::GetUser(userid, osu_api::v1::mode::taiko, &UI) != 0) {
+								try {
+									db.AddUserData(&UI, timeStr);
+								}
+								catch (osucat::database_exception) {
+								}
+							}
+						}
+						catch (osucat::NetWork_Exception) {
+						}
+					}
+				}
+
+				try {
+					if (osu_api::v1::api::GetUser(userid, osu_api::v1::mode::ctb, &UI) != 0) {
+						try {
+							db.AddUserData(&UI, timeStr);
+						}
+						catch (osucat::database_exception) {
+						}
+					}
+				}
+				catch (osucat::NetWork_Exception) {
+					try {
+						if (osu_api::v1::api::GetUser(userid, osu_api::v1::mode::ctb, &UI) != 0) {
+							try {
+								db.AddUserData(&UI, timeStr);
+							}
+							catch (osucat::database_exception) {
+							}
+						}
+					}
+					catch (osucat::NetWork_Exception) {
+						try {
+							if (osu_api::v1::api::GetUser(userid, osu_api::v1::mode::ctb, &UI) != 0) {
+								try {
+									db.AddUserData(&UI, timeStr);
+								}
+								catch (osucat::database_exception) {
+								}
+							}
+						}
+						catch (osucat::NetWork_Exception) {
+						}
+					}
+				}
+
+				try {
+					if (osu_api::v1::api::GetUser(userid, osu_api::v1::mode::mania, &UI) != 0) {
+						try {
+							db.AddUserData(&UI, timeStr);
+						}
+						catch (osucat::database_exception) {
+						}
+					}
+				}
+				catch (osucat::NetWork_Exception) {
+					try {
+						if (osu_api::v1::api::GetUser(userid, osu_api::v1::mode::mania, &UI) != 0) {
+							try {
+								db.AddUserData(&UI, timeStr);
+							}
+							catch (osucat::database_exception) {
+							}
+						}
+					}
+					catch (osucat::NetWork_Exception) {
+						try {
+							if (osu_api::v1::api::GetUser(userid, osu_api::v1::mode::mania, &UI) != 0) {
+								try {
+									db.AddUserData(&UI, timeStr);
+								}
+								catch (osucat::database_exception) {
+								}
+							}
+						}
+						catch (osucat::NetWork_Exception) {
+						}
+					}
+				}
+			}
+			catch (std::exception& ex) {
+				dailyUpdatePoster(id, userid, timeStr); return;//出错重试
+			}
+			char dugtmp[256];
+			sprintf_s(dugtmp, u8"[%s] %s[updater]：(No.%d) 已成功更新用户 %lld 的数据。",
+				utils::unixTime2Str(time(NULL)).c_str(), output_prefix,
+				id,
+				userid);
+			cout << dugtmp << endl;
+		}
 
 	};
 
+	class CmdParser {
+	public:
+		static void parser(Target tar, const GroupSender sdr) {
+			if (tar.message[0] == '!' || tar.message.find(u8"！") == 0) {
+				tar.message = tar.message[0] < 0 ? tar.message.substr(3) : tar.message.substr(1); //提前处理掉前缀
+				try {
+					Database db;
+					db.Connect();
+					if (db.is_Blocked(tar.user_id) == 1) return; //在黑名单内的用户被忽略
+					if (_stricmp(tar.message.substr(0, 18).c_str(), u8"猫猫调用次数") == 0) {
+						Main::outputcallcount(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 6).c_str(), "recent") == 0) {
+						if (tar.type == Target::Type::GROUP) { if (db.isGroupEnable(tar.group_id, 3) == 0) return; }
+						Main::recent(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 2).c_str(), "pr") == 0) {
+						if (tar.type == Target::Type::GROUP) { if (db.isGroupEnable(tar.group_id, 3) == 0) return; }
+						Main::recent(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 4).c_str(), "help") == 0) {
+						Main::help(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 5).c_str(), "about") == 0) {
+						Main::about(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 7).c_str(), "contact") == 0) {
+						Main::contact(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 4).c_str(), "ping") == 0) {
+						Main::ping(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 5).c_str(), "setid") == 0) {
+						Main::setid(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 5).c_str(), "unset") == 0) {
+						Main::unsetid(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 6).c_str(), u8"因佛") == 0) {
+						Main::info(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 4).c_str(), "info") == 0) {
+						Main::info(tar); return;
+					}
+					/*if ((_stricmp(tar.message.substr(0, 8).c_str(), "textinfo") == 0) || (_stricmp(tar.message.substr(0, 2).c_str(), "ti") == 0)) {
+						if (_stricmp(msg.substr(0, 2).c_str(), "ti") == 0) {
+							textinfo(msg.substr(2), tar, params);
+						}
+						else {
+							textinfo(msg.substr(8), tar, params);
+						}
+						return true;
+					}*/
+					if (_stricmp(tar.message.substr(0, 4).c_str(), "bpme") == 0) { return; }
+					if (_stricmp(tar.message.substr(0, 4).c_str(), "bpht") == 0) {
+						Main::bphead_tail(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 2).c_str(), "bp") == 0) {
+						if (tar.type == Target::Type::GROUP) { if (db.isGroupEnable(tar.group_id, 1) == 0) return; }
+						Main::bp(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 5).c_str(), "score") == 0) {
+						Main::score(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 6).c_str(), "update") == 0) {
+						Main::update(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 7).c_str(), "setmode") == 0) {
+						Main::setmode(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 5).c_str(), "rctpp") == 0) {
+						if (tar.type == Target::Type::GROUP) { if (db.isGroupEnable(tar.group_id, 2) == 0) return; }
+						Main::rctpp(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 4).c_str(), "ppvs") == 0) {
+						Main::ppvs(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 2).c_str(), "pp") == 0) {
+						Main::pp(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 4).c_str(), "with") == 0) {
+						Main::ppwith(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 9).c_str(), "badgelist") == 0) {
+						Main::badgelist(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 9).c_str(), "setbanner") == 0) {
+						Main::setbanner_v1(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 12).c_str(), "setinfopanel") == 0) {
+						Main::setinfopanel_v1(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 11).c_str(), "resetbanner") == 0) {
+						Main::resetbanner_v1(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 14).c_str(), "resetinfopanel") == 0) {
+						Main::resetinfopanel_v1(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 6).c_str(), "occost") == 0) {
+						Main::occost(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 7).c_str(), "bonuspp") == 0) {
+						Main::bonuspp(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 9).c_str(), "badgelist") == 0) {
+						Main::badgelist(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 8).c_str(), "setbadge") == 0) {
+						Main::setbadge(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 9).c_str(), "searchuid") == 0) {
+						Main::searchuid(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 6).c_str(), "switch") == 0) {
+						Main::switchfunction(tar, sdr); return;
+					}
+					if (_stricmp(tar.message.substr(0, 12).c_str(), "getbadgeinfo") == 0) {
+						Main::getbadgeinfo(tar); return;
+					}
+					for (int fi = 0; fi < adminlist.size(); ++fi) {
+						if (tar.user_id == adminlist[fi].user_id) {
+							if (_stricmp(tar.message.substr(0, 11).c_str(), "adoptbanner") == 0) {
+								Admin::adoptbanner_v1(tar); return;
+							}
+							if (_stricmp(tar.message.substr(0, 14).c_str(), "adoptinfopanel") == 0) {
+								Admin::adoptinfopanel_v1(tar); return;
+							}
+							if (_stricmp(tar.message.substr(0, 9).c_str(), "cleartemp") == 0) {
+								if (adminlist[fi].role != 1) { send_message(tar, u8"权限不足"); return; }
+								Admin::cleartemp(tar); return;
+							}
+							if (_stricmp(tar.message.substr(0, 12).c_str(), "rejectbanner") == 0) {
+								Admin::rejectbanner_v1(tar); return;
+							}
+							if (_stricmp(tar.message.substr(0, 15).c_str(), "rejectinfopanel") == 0) {
+								Admin::rejectinfopanel_v1(tar); return;
+							}
+							if (_stricmp(tar.message.substr(0, 9).c_str(), "resetuser") == 0) {
+								if (adminlist[fi].role != 1) { send_message(tar, u8"权限不足"); return; }
+								Admin::resetuser(tar); return;
+							}
+							if (_stricmp(tar.message.substr(0, 8).c_str(), "addbadge") == 0) {
+								if (adminlist[fi].role != 1) { send_message(tar, u8"权限不足"); return; }
+								Admin::addbadge(tar); return;
+							}
+							if (_stricmp(tar.message.substr(0, 11).c_str(), "dailyupdate") == 0) {
+								if (adminlist[fi].role != 1) { send_message(tar, u8"权限不足"); return; }
+								System::_UpdateManually(tar);
+								return;
+							}
+							if (_stricmp(tar.message.substr(0, 5).c_str(), "block") == 0) {
+								Admin::blockuser(tar); return;
+							}
+							if (_stricmp(tar.message.substr(0, 8).c_str(), "rmbottle") == 0) {
+								Admin::removebottle(tar); return;
+							}
+							if (_stricmp(tar.message.substr(0, 11).c_str(), "setnewbadge") == 0) {
+								if (adminlist[fi].role != 1) { send_message(tar, u8"权限不足"); return; }
+								Admin::setnewbadge(tar); return;
+							}
+						}
+					}
+					if (_stricmp(tar.message.substr(0, 11).c_str(), "reloadadmin") == 0) {
+						if (tar.user_id != owner_userid) {
+							return;
+						}
+						if (db.reloadAdmin()) {
+							send_message(tar, u8"管理员列表已更新。");
+						}
+						else {
+							send_message(tar, u8"更新失败.");
+						}
+						return;
+					}
+					//if (steamcheck::csgocheck::cmdParse(msg, tar, senderinfo, params))return true;
+					if (tar.type == Target::Type::GROUP)if (db.isGroupEnable(tar.group_id, 4) == 0) return; //拦截娱乐模块
+				}
+				catch (osucat::database_exception& ex) {
+					send_message(tar, u8"访问数据库时出现了一个错误，请稍后重试...");
+					char reportMsg[1024];
+					sprintf_s(reportMsg,
+						"[%s]\n"
+						u8"Mysql出现错误\n"
+						u8"错误代码：%d\n"
+						u8"详细信息：%s\n",
+						utils::unixTime2Str(time(NULL)).c_str(),
+						ex.Code(),
+						ex.Info().c_str()
+					);
+					send_private_message(owner_userid, reportMsg);
+				}
+				catch (osucat::NetWork_Exception& ex) {
+					send_message(tar, u8"访问api时超时...请稍后重试...");
+				}
+				catch (std::exception& ex) {
+					send_message(tar, u8"出现了一个未知错误，请稍后重试...");
+					char reportMsg[1024];
+					sprintf_s(reportMsg,
+						"[%s]\n"
+						u8"已捕获std::exception\n"
+						u8"操作者：%lld\n"
+						u8"触发指令：%s\n"
+						u8"详细信息：%s\n",
+						utils::unixTime2Str(time(NULL)).c_str(),
+						tar.user_id,
+						tar.message.c_str(),
+						ex.what()
+					);
+					send_private_message(owner_userid, reportMsg);
+				}
+			}
+		}
+	};
 
 	void echo(const Target tar, const GroupSender sdr) {
 		send_message(tar, tar.message);
