@@ -8,6 +8,13 @@ int main()
 {
 	sprintf_s(wshost, "%s", "127.0.0.1");
 	sprintf_s(output_prefix, "%s", "[osucat]");
+	sprintf_s(OC_SQL_DATABASE, "%s", "osucat");
+	sprintf_s(OC_SQL_HOST, "%s", "127.0.0.1");
+	OC_SQL_PORT = 32148;
+	sprintf_s(OC_SQL_USER, "%s", "root");
+	sprintf_s(OC_SQL_PASSWORD, "%s", "ASDasdASD32111!");
+
+
 	wsport = 6700;
 	old_code_page = GetConsoleCP();
 	SetConsoleCP(CP_UTF8);

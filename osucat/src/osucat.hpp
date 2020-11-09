@@ -72,7 +72,7 @@ namespace osucat {
 			rtnmsg.push_back("nyan");
 			rtnmsg.push_back("owo");
 			rtnmsg.push_back("qwq");
-			rtnmsg.push_back("喵");
+			rtnmsg.push_back(u8"喵");
 			send_message(tar, rtnmsg[utils::randomNum(0, rtnmsg.size() - 1)]);
 		}
 
@@ -3544,7 +3544,8 @@ namespace osucat {
 						return;
 					}
 					//if (steamcheck::csgocheck::cmdParse(msg, tar, senderinfo, params))return true;
-					if (tar.type == Target::Type::GROUP)if (db.isGroupEnable(tar.group_id, 4) == 0) return; //拦截娱乐模块
+					if (tar.type == Target::Type::GROUP) if (db.isGroupEnable(tar.group_id, 4) == 0) return; //拦截娱乐模块
+					osucat::addons::CmdParser::parser(tar, sdr);
 				}
 				catch (osucat::database_exception& ex) {
 					send_message(tar, u8"访问数据库时出现了一个错误，请稍后重试...");

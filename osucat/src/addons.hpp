@@ -404,53 +404,51 @@ namespace osucat::addons {
 
 
 				//猜单词游戏部分
-                /*
 				if (_stricmp(tar.message.substr(0, 15).c_str(), u8"猜单词帮助") == 0) {
-					*params = u8"[CQ:image,file=osucat\\help\\hangmanhelp.png]";
+					send_message(tar, u8"[CQ:image,file=osucat\\help\\hangmanhelp.png]");
 					return;
 				}
 				if (_stricmp(tar.message.substr(0, 15).c_str(), u8"猜单词状态") == 0) {
-					HangmanGame::gameStatus(params);
+					send_message(tar, HangmanGame::gameStatus());
 					return;
 				}
 				if (_stricmp(tar.message.substr(0, 18).c_str(), u8"猜单词排行榜") == 0) {
 					int page = 1;
 					string page_str = tar.message.substr(18);
 					if (utils::isNum(page_str)) page = stoi(page_str);
-					HangmanGame::hangmanRanking(page, params);
+					send_message(tar, HangmanGame::hangmanRanking(page));
 					return;
 				}
 				if (_stricmp(tar.message.substr(0, 10).c_str(), u8"猜单词+") == 0) {
-					HangmanGame::startHangman(senderinfo, tar, tar.message.substr(10), params);
+					send_message(tar, HangmanGame::startHangman(tar, tar.message.substr(10)));
 					return;
 				}
 				if (_stricmp(tar.message.substr(0, 9).c_str(), u8"猜单词") == 0) {
-					HangmanGame::startHangman(senderinfo, tar, "", params);
+					send_message(tar, HangmanGame::startHangman(tar, ""));
 					return;
 				}
-				if (_stricmp(msg.substr(0, 6).c_str(), u8"放弃") == 0) {
-					HangmanGame::giveupHangman(senderinfo, tar, params);
+				if (_stricmp(tar.message.substr(0, 6).c_str(), u8"放弃") == 0) {
+					send_message(tar, HangmanGame::giveupHangman(tar));
 					return;
 				}
-				if (msg.length() == 1 && HangmanGame::findPlayer(tar.user_id) != -1) {
-					HangmanGame::inputHangman(senderinfo, tar, tar.message, params);
+				if (tar.message.length() == 1 && HangmanGame::findPlayer(tar.user_id) != -1) {
+					send_message(tar, HangmanGame::inputHangman(tar, tar.message));
 					return;
 				}
-				if (_stricmp(msg.substr(0, 15).c_str(), u8"我的猜单词") == 0) {
-					HangmanGame::showPlayerData(senderinfo, tar, params);
+				if (_stricmp(tar.message.substr(0, 15).c_str(), u8"我的猜单词") == 0) {
+					send_message(tar, HangmanGame::showPlayerData(tar));
 					return;
 				}
-				if (_stricmp(msg.substr(0, 27).c_str(), "recalculateallhangmanscores") == 0) {
+				if (_stricmp(tar.message.substr(0, 27).c_str(), "recalculateallhangmanscores") == 0) {
 					for (int i = 0; i < adminlist.size(); i++) {
 						if (tar.user_id == adminlist[i].user_id) {
-							HangmanGame::recalculateAllScores(params);
+							send_message(tar, HangmanGame::recalculateAllScores());
 							return;
 						}
 					}
 					send_message(tar, u8"权限不足");
 					return;
 				}
-				*/
 			}
 			catch (osucat::database_exception& ex) {
 				send_message(tar, u8"访问数据库时出现了一个错误，请稍后重试...");
