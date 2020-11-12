@@ -38,13 +38,6 @@ private:
 	Word word;
 	const static int number_of_words = 10000;
 
-	static double logBino(int n, int r) {
-		double sum = 0;
-		for (int j = r; j > 0; j--) {
-			sum += log(n - j + 1) - log(j);
-		}
-		return sum;
-	}
 	static double scoring(Word word, string guess_history, char mods) {
 		const double H = 1000000000.0;
 		string list = "", list_E = "", list_history = "", list_historyE = "";
@@ -1123,18 +1116,11 @@ private:
 		sprintf_s(tmp,
 			"INSERT INTO game_hangman_history (time,player_id,word_id,word_str,guess_history,mods,score) values (%lld,%lld,%d,\"%s\",\"%s\",%d,%f)",
 			time(NULL), player_id, word.index, word.str, guess_history, mods, score);
-		try {
-			osucat::Database db;
-			db.Connect();
-			db.Insert(tmp);
-			db.Close();
-		}
-		catch (std::exception) {
-			return u8"\n未知错误，未记录数据" + cuteEmoji(CuteEmojiType::Sad);
-		}
-		catch (osucat::database_exception) {
-			return u8"\n数据库错误，未记录数据" + cuteEmoji(CuteEmojiType::Sad);
-		}
+		
+		osucat::Database db;
+		db.Connect();
+		db.Insert(tmp);
+		db.Close();
 		return "";
 	}
 	string leaveRoom(double score) {
@@ -1150,8 +1136,8 @@ public:
 		newWord();
 	}
 	string guess(char input) {
-		if (input == ' ') return u8"你输入的是空气啦";
-		if (input <= 'Z' && input >= 'A') input += 'A' - 'a';
+		if (input <= 'Z' && input >= 'A') input += 'a' - 'A';
+		if (input > 'z' || input < 'a') return u8"你输入的不是字母" + cuteEmoji(CuteEmojiType::Sad);
 		if (guess_history.find(input) != guess_history.npos) return u8"你已经猜过这个字母了！" + cuteEmoji(CuteEmojiType::Happy);
 		guess_history += input;
 		if (word.str.find(input) != word.str.npos) {
@@ -1159,7 +1145,7 @@ public:
 		}
 		else {
 			HP -= 1;
-			return this->getStatus();//u8"没有这个字母~(HP=" + to_string(HP) + u8")";// + to_string(input);
+			return this->getStatus();//u8"没有这个字母~(HP=" + std::to_string(HP) + u8")";// + std::to_string(input);
 		}
 	}
 	string getStatus() {
@@ -1211,7 +1197,7 @@ public:
 				}
 			}
 		}
-		output += u8"\n" + mods_display + "HP:" + to_string(HP);
+		output += u8"\n" + mods_display + "HP:" + std::to_string(HP);
 		if (guess_history != "") output += u8" 已用字母:" + guess_history;
 		return output;
 	}
@@ -1232,7 +1218,7 @@ public:
 			output += leaveRoom(0);
 		}
 		else {
-			output = u8"你猜对啦~好厉害！猫猫给你打" + to_string(scoring(word, guess_history, mods)) + u8"分" + cuteEmoji(CuteEmojiType::Happy);
+			output = u8"你猜对啦~好厉害！猫猫给你打" + std::to_string(scoring(word, guess_history, mods)) + u8"分" + cuteEmoji(CuteEmojiType::Happy);
 			output += leaveRoom(scoring(word, guess_history, mods));
 		}
 		return output;
@@ -1249,29 +1235,51 @@ static Hangman hangman_list[lobby_size];
 
 class HangmanGame {
 public:
-	static void updatePlayer(GroupSender info, Target tar) {
-		try {
-			osucat::Database db;
-			db.Connect();
-			json j = db.Select("SELECT score FROM game_hangman_history where player_id = " + to_string(tar.user_id));
-
-			double max_qq = 0, qq = 0;
-			const double lambda = 0.98;
-			for (int i = 0; i < j.size(); i++) {
-				qq = qq * lambda + stod(j[i]["score"].get<std::string>());
-				if (qq > max_qq) max_qq = qq;
+	static std::string updatePlayer(Target tar) {
+		string out = "";
+		osucat::Database db;
+		db.Connect();
+		json j = db.Select("SELECT score, guess_history, word_str FROM game_hangman_history where player_id = " + to_string(tar.user_id));
+		
+		double max_qq = 0, qq = 0, score = 0;
+		const double lambda = 0.98;
+		double acc = 0, passrate = 0;
+		int playcount = 0, total_guesses = 0, total_hits = 0, total_passes = 0;
+		for (int i = 0; i < j.size(); i++) {
+			score = stod(j[i]["score"].get<std::string>());
+			qq = qq * lambda + score;
+			std::string word_str = j[i]["word_str"].get<std::string>();
+			std::string guess_history = j[i]["guess_history"].get<std::string>();
+			for (int k = 0; k < guess_history.length(); k++) {
+				if (word_str.find(guess_history[k]) != word_str.npos) {
+					total_hits++;
+				}
 			}
-			//max_qq *= 1 - lambda;
+			total_guesses += guess_history.length();
+			if (qq > max_qq) max_qq = qq;
+			playcount++;
+			if (score > 0.01) total_passes++;
+		}
+		if (total_guesses > 0) acc = (double) total_hits / (double) total_guesses;
+		if (playcount > 0) passrate = (double)total_passes / (double)playcount;
+		//max_qq *= 1 - lambda;
 
-			db.Update("UPDATE game_hangman_ranking SET qqpoint = " + to_string(max_qq) + " where player_id = " + to_string(tar.user_id));
-			db.Close();
+		db.Update("UPDATE game_hangman_ranking SET qqpoint = " + std::to_string(max_qq) + ", acc = " + std::to_string(acc) + ", passrate = " + std::to_string(passrate) + ", playcount = " + std::to_string(playcount) + " where player_id = " + std::to_string(tar.user_id));
+		json jranking = db.Select("Select qqpoint, player_id, qqrank from game_hangman_ranking ORDER BY qqpoint DESC");
+		for (int i = 0; i < jranking.size(); i++) {
+			if (jranking[i]["player_id"].get<std::string>() == std::to_string(tar.user_id)) {
+				int prev_rank = stoi(jranking[i]["qqrank"].get<std::string>());
+				int curr_rank = i + 1;
+				if (curr_rank != prev_rank) {
+					db.Update("UPDATE game_hangman_ranking SET qqrank = " + std::to_string(curr_rank) + " where player_id = " + std::to_string(tar.user_id));
+					if (curr_rank < prev_rank) out = " (+" + std::to_string(prev_rank - curr_rank) + ")";
+				}
+				break;
+			}
 		}
-		catch (osucat::database_exception) {
-			//nothing
-		}
-		catch (std::exception) {
-			//nothing
-		}
+
+		db.Close();
+		return out;
 	}
 	static int findPlayer(int64_t id) {
 		for (int i = 0; i < lobby_size; i++) {
@@ -1279,62 +1287,55 @@ public:
 		}
 		return -1;
 	}
-	static string introduceHangman() { return u8"第一次玩猜单词喵~接下来猫猫将给出一个未知单词，你要猜其中有哪些字母~比如想猜字母a的话就用!a来回复我~可以使用!猜单词帮助 查看帮助" + cuteEmoji(CuteEmojiType::Happy) + "\n"; }
+	static std::string introduceHangman() { return u8"第一次玩猜单词喵~接下来猫猫将给出一个未知单词，你要猜其中有哪些字母~比如想猜字母a的话就用!a来回复我~可以使用!猜单词帮助 查看帮助" + cuteEmoji(CuteEmojiType::Happy) + "\n"; }
 
-	static bool playerRankingExists(GroupSender info, Target tar) {
-		try {
-			osucat::Database db;
-			db.Connect();
-			json j = db.Select("SELECT player_id, nickname from game_hangman_ranking");
-			for (int i = 0; i < j.size(); i++) {
-				if (j[i]["player_id"].get<std::string>() == to_string(tar.user_id)) {
-					if (j[i]["nickname"].get<std::string>() != info.nickname) {
-						db.Update("UPDATE game_hangman_ranking SET nickname = \"" + info.nickname + "\" where player_id = " + to_string(tar.user_id));
-					}
-					return true;
+	static bool playerRankingExists(Target tar) {
+		osucat::Database db;
+		db.Connect();
+		json j = db.Select("SELECT player_id, nickname from game_hangman_ranking");
+		for (int i = 0; i < j.size(); i++) {
+			if (j[i]["player_id"].get<std::string>() == std::to_string(tar.user_id)) {
+				if (j[i]["nickname"].get<std::string>() != tar.nickname) {
+					db.Update("UPDATE game_hangman_ranking SET nickname = \"" + tar.nickname + "\" where player_id = " + std::to_string(tar.user_id));
 				}
+				return true;
 			}
-			char tmp[200];
-			sprintf_s(tmp, "INSERT INTO game_hangman_ranking (player_id, nickname, qqpoint, qqrank) values (%lld, \"%s\", %f, %d)", tar.user_id, info.nickname, 0, 0);
-			db.Insert(tmp);
-			db.Close();
-			return false;
 		}
-		catch (osucat::database_exception) {
-			//Nothing
-			return false;
-		}
+		char tmp[200];
+		sprintf_s(tmp, "INSERT INTO game_hangman_ranking (player_id, nickname, qqpoint, qqrank) values (%lld, \"%s\", %f, %d)", tar.user_id, tar.nickname.c_str(), 0, 0);
+		db.Insert(tmp);
+		db.Close();
+		return false;
 	}
-	static void showPlayerData(GroupSender info, Target tar, string* out) {
-		if (!playerRankingExists(info, tar)) {
-			*out = u8"你还没有玩过喵~";
-			return;
+	static std::string showPlayerData(Target tar) {
+		std::string out = "";
+		if (!playerRankingExists(tar)) {
+			out = u8"你还没有玩过喵~";
+			return out;
 		}
-		try {
-			updatePlayer(info, tar);
-			osucat::Database db;
-			db.Connect();
-			json j = db.Select("SELECT * from game_hangman_ranking where player_id = " + to_string(tar.user_id) + " ORDER BY qqpoint DESC");
-			*out = u8"用户" + j[0]["nickname"].get<std::string>() + " (" + j[0]["player_id"].get<std::string>() + u8")的数据：";
-			*out += u8"\npp:" + j[0]["qqpoint"].get<std::string>();
-			*out += u8"\n排名:" + to_string(stoi(j[0]["qqrank"].get<std::string>()) + 1);
-			db.Close();
-		}
-		catch (osucat::database_exception) {
-			//Nothing
-			*out = u8"数据库错误" + cuteEmoji(CuteEmojiType::Sad);
-		}
+		string rank_change = updatePlayer(tar);
+		osucat::Database db;
+		db.Connect();
+		json j = db.Select("SELECT * from game_hangman_ranking where player_id = " + std::to_string(tar.user_id));
+		out = u8"用户" + j[0]["nickname"].get<std::string>() + " (" + j[0]["player_id"].get<std::string>() + u8")的猜单词数据：";
+		out += u8"\npp:" + j[0]["qqpoint"].get<std::string>();
+		out += u8"\n排名:" + std::to_string(std::stoi(j[0]["qqrank"].get<std::string>())) + rank_change;
+		out += u8"\n游玩次数:" + std::to_string(std::stoi(j[0]["playcount"].get<std::string>()));
+		out += u8"\n命中率:" + std::to_string(100.0 * std::stod(j[0]["acc"].get<std::string>())) + "%";
+		out += u8"\n通过率:" + std::to_string(100.0 * std::stod(j[0]["passrate"].get<std::string>())) + "%";
+		db.Close();
+		return out;
 	}
 	//开始一局游戏的请求
-	static void startHangman(GroupSender senderinfo, Target tar, string cmd, string* out) {
-		*out = "";
+	static string startHangman(Target tar, string cmd) {
+		std::string out = "";
 		char mods = 0x00;
 		if (findPlayer(tar.user_id) != -1) {
-			*out += u8"你的上一局游戏还没有结束呢~" + to_string(findPlayer(tar.user_id));
-			return;
+			out += u8"你的上一局游戏还没有结束呢~" + std::to_string(findPlayer(tar.user_id));
+			return out;
 		}
-		if (!playerRankingExists(senderinfo, tar)) {
-			*out = introduceHangman();
+		if (!playerRankingExists(tar)) {
+			out = introduceHangman();
 		}
 		for (int i = 0; i < min(cmd.length(), 4); i++) {
 			if (cmd[i] == 'E' || cmd[i] == 'e') mods |= HANGMAN_MOD_E;
@@ -1355,92 +1356,80 @@ public:
 					hangman_list[i].guess(hangman_list[i].word.str[1]);
 					hangman_list[i].HP = 8;
 				}
-				*out += hangman_list[i].getStatus();
-				return;
+				out += hangman_list[i].getStatus();
+				return out;
 			}
 		}
-		*out = u8"房间已经满惹" + cuteEmoji(CuteEmojiType::Sad) + u8"\n等会再来玩吧" + cuteEmoji(CuteEmojiType::Happy);
-		return;
+		out = u8"房间已经满惹" + cuteEmoji(CuteEmojiType::Sad) + u8"\n等会再来玩吧" + cuteEmoji(CuteEmojiType::Happy);
+		return out;
 	}
 	//处理游戏的输入
-	static void inputHangman(GroupSender senderinfo, Target tar, string input, string* out) {
+	static string inputHangman(Target tar, string input) {
+		std::string out;
 		int position = findPlayer(tar.user_id);
 		if (position == -1) {
-			*out = u8"你还没有开始一局游戏呢" + cuteEmoji(CuteEmojiType::Happy);
+			return u8"你还没有开始一局游戏呢" + cuteEmoji(CuteEmojiType::Happy);
 		}
 		else {
 			if (input == "") {
-				*out = u8"你输入的是空气啦！";
-				return;
+				return u8"你输入的是空气啦！";
 			}
-			*out = hangman_list[position].guess(input[0]);
+			out = hangman_list[position].guess(input[0]);
 			if (hangman_list[position].isGameEnded()) {
-				*out += "\n" + hangman_list[position].endGame();
-				updatePlayer(senderinfo, tar);
+				out += "\n" + hangman_list[position].endGame();
+				out += updatePlayer(tar);
 			}
 		}
+		return out;
 	}
 	//放弃一局游戏
-	static void giveupHangman(GroupSender senderinfo, Target tar, string* out) {
+	static string giveupHangman(Target tar) {
 		int position = findPlayer(tar.user_id);
 		if (position == -1) {
-			*out = u8"你还没有在游戏中呢" + cuteEmoji(CuteEmojiType::Happy);
+			return u8"你还没有在游戏中呢" + cuteEmoji(CuteEmojiType::Happy);
 		}
 		else {
-			*out = hangman_list[position].giveUp();
-			updatePlayer(senderinfo, tar);
+			return hangman_list[position].giveUp() + updatePlayer(tar);
 		}
 	}
 	//获得房间状态和列表
-	static void gameStatus(string* out) {
-		*out = u8"房间列表：\n";
+	static std::string gameStatus() {
+		std::string out = u8"房间列表：\n";
 		for (int i = 0; i < lobby_size; i++) {
-			*out += to_string(i) + u8":" + to_string(hangman_list[i].player_id) + u8"\n" + hangman_list[i].getStatus() + u8"\n";
+			out += std::to_string(i) + u8":" + std::to_string(hangman_list[i].player_id) + u8"\n" + hangman_list[i].getStatus() + u8"\n";
 		}
-		return;
+		return out;
 	}
 	//获得玩家ranking表
-	static void hangmanRanking(int page, string* out) {
-		try {
-			*out = "";
-			osucat::Database db;
-			db.Connect();
-			json j = db.Select("SELECT nickname, qqpoint from game_hangman_ranking ORDER BY qqpoint DESC");
+	static std::string hangmanRanking(int page) {
+		std::string out = "";
+		osucat::Database db;
+		db.Connect();
+		json j = db.Select("SELECT nickname, qqpoint from game_hangman_ranking ORDER BY qqpoint DESC");
 
-			page = max(page, 1);
-			for (int i = min(j.size(), (page - 1) * 10); i < min(j.size(), page * 10); i++) {
-				*out += to_string(i + 1) + ": " + to_string(stoi(j[i]["qqpoint"].get<std::string>())) + "pp " + j[i]["nickname"].get<std::string>();
-				if (i + 1 < min(j.size(), page * 10)) *out += "\n";
-			}
-			db.Close();
+		page = max(page, 1);
+		for (int i = min(j.size(), (page - 1) * 10); i < min(j.size(), page * 10); i++) {
+			out += std::to_string(i + 1) + ": " + std::to_string(stoi(j[i]["qqpoint"].get<std::string>())) + "pp " + j[i]["nickname"].get<std::string>();
+			if (i + 1 < min(j.size(), page * 10)) out += "\n";
 		}
-		catch (osucat::database_exception) {
-			*out = u8"数据库错误" + cuteEmoji(CuteEmojiType::Sad);
-		}
+		db.Close();
+		return out;
 	}
-	static void recalculateAllScores(string* out) {
-		try {
-			osucat::Database db;
-			db.Connect();
-			json j = db.Select("Select id,word_id,guess_history,mods from game_hangman_history");
-			int jsize = j.size();
-			for (int i = 0; i < jsize; i++) {
-				int id = stoi(j[i]["id"].get<std::string>());
-				int word_id = stoi(j[i]["word_id"].get<std::string>());
-				string guess_history = j[i]["guess_history"].get<std::string>();
-				char mods = stoi(j[i]["mods"].get<std::string>());
-				double score = Hangman::scoring(Hangman::wordLibrary(Hangman::WordLibOperation::FindWordByIndex, word_id), guess_history, mods);
-				db.Update("UPDATE game_hangman_history SET score = " + to_string(score) + " where id = " + to_string(id));
-			}
-			db.Close();
-			*out = u8"成功，重新计算了" + to_string(jsize) + u8"条成绩";
+	static std::string recalculateAllScores() {
+		osucat::Database db;
+		db.Connect();
+		json j = db.Select("Select id,word_id,guess_history,mods from game_hangman_history");
+		int jsize = j.size();
+		for (int i = 0; i < jsize; i++) {
+			int id = std::stoi(j[i]["id"].get<std::string>());
+			int word_id = std::stoi(j[i]["word_id"].get<std::string>());
+			std::string guess_history = j[i]["guess_history"].get<std::string>();
+			char mods = std::stoi(j[i]["mods"].get<std::string>());
+			double score = Hangman::scoring(Hangman::wordLibrary(Hangman::WordLibOperation::FindWordByIndex, word_id), guess_history, mods);
+			db.Update("UPDATE game_hangman_history SET score = " + std::to_string(score) + " where id = " + std::to_string(id));
 		}
-		catch (osucat::database_exception) {
-			*out = u8"数据库错误" + cuteEmoji(CuteEmojiType::Sad);
-		}
-		catch (std::exception) {
-			*out = u8"神奇的错误发生了" + cuteEmoji(CuteEmojiType::Happy);
-		}
+		db.Close();
+		return u8"成功，重新计算了" + std::to_string(jsize) + u8"条成绩";
 	}
 };
 

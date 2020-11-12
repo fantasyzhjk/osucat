@@ -10,8 +10,6 @@
 
 #include <mysql.h>
 
-char SQL_USER[32], SQL_HOST[32], SQL_PWD[32], SQL_DATABASE[32];
-int SQL_PORT;
 
 namespace osucat::addons {
 	enum driftingBottleDBEvent { WRITEIN = 0, ADDCOUNTER, CHANGESTATUS, DELETEBOTTLE };
@@ -44,7 +42,7 @@ namespace osucat {
 		}
 
 		void Connect() {
-			if (mysql_real_connect(&this->conn, SQL_HOST, SQL_USER, SQL_PWD, SQL_DATABASE, SQL_PORT, NULL, 0) == NULL) {
+			if (mysql_real_connect(&this->conn, OC_SQL_HOST, OC_SQL_USER, OC_SQL_PASSWORD, OC_SQL_DATABASE, OC_SQL_PORT, NULL, 0) == NULL) {
 				throw osucat::database_exception(mysql_error(&this->conn), mysql_errno(&this->conn));
 			}
 			if (int t = mysql_set_character_set(&conn, "utf8mb4") != NULL) {

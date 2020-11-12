@@ -27,6 +27,7 @@ namespace cqhttp_api {
 		int64_t group_id;
 		int64_t user_id;
 		int64_t message_id;
+		std::string nickname;
 		std::string message;
 	};
 
@@ -249,6 +250,7 @@ namespace cqhttp_api {
 				}
 				sdr.age = jm["age"].get<int>();
 				sdr.nickname = jm["nickname"].get<std::string>();
+				tar.nickname = sdr.nickname;
 				tar.user_id = j["user_id"].get<int64_t>();
 				tar.time = j["time"].get<int64_t>();
 				tar.message = j["message"].get<std::string>();
