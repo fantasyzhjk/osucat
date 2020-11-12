@@ -10,22 +10,24 @@ namespace cqhttp_api {
 	public:
 		static void on_startup() {
 			Magick::InitializeMagick(OC_ROOT_PATH);
-			// TODO: 创建每日更新线程、判断配置文件是否存在、读取或创建配置文件 收尾的时候再写
+			osucat::System::_FolderCheck();
+			osucat::System::_ConfigCheck();
+			osucat::System::_AdminCheck();
+			osucat::System::_CreateDUThread();
+			steamcat::csgocheck::_AutoCheck();
 		}
 
 		static void on_message(const Target target, const GroupSender sender) {
 			osucat::CmdParser::parser(target, sender);
-			//gwsp->close();
-			//echo(target, sender);
 		}
 
 		static void on_request(const Request request) {
 			switch (request.type) {
 			case Request::Type::FRIEND:
-				friend_request(request, Request::Event::ACCEPT);
+				friend_request(request, Request::Event::ACCEPT); //自动同意好友请求
 			case Request::Type::GROUP:
-				if (request.subtype == Request::SubType::INVITE)
-					friend_request(request, Request::Event::ACCEPT);
+				if (request.subtype == Request::SubType::INVITE) //如果群请求事件是被邀请
+					friend_request(request, Request::Event::ACCEPT); //自动同意
 			default:
 				break;
 			}

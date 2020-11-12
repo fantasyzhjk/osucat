@@ -1,8 +1,6 @@
 ﻿#pragma once
 char OC_ROOT_PATH[512];
 bool OC_DEBUG_MODE = false;
-bool OC_IS_ACTIVE = true;
-bool OC_USE_REMOTE_SERVER = false;
 long long int owner_userid;
 long long int management_groupid;
 char OC_SERVER_HOST[32];
@@ -13,6 +11,7 @@ char OC_SQL_DATABASE[16];
 char OC_SQL_USER[8];
 char OC_SQL_PASSWORD[32];
 char OC_OSU_API_KEY[128];
+char SC_STEAM_API_KEY[128];
 
 #include <stdio.h>
 #include <easywsclient/easywsclient.hpp>

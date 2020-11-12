@@ -134,8 +134,6 @@ namespace osucat::addons {
 					string str1, str2;
 					str1 = cmd.substr(0, cmd.find(u8"还是"));
 					str2 = cmd.substr(cmd.find(u8"还是") + 6);
-					cout << str1 + " " << endl;
-					cout << str2 + " " << endl;
 					if (str1.empty() || str2.empty()) return;
 					switch (utils::randomNum(1, 2)) {
 					case 1:

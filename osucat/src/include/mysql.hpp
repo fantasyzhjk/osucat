@@ -19,6 +19,17 @@ namespace osucat::entertainment {
 	// TODO
 }
 
+namespace steamcat {
+	struct CSGOUserInfo {
+		int64_t SteamId;
+		bool Available;
+		int VACBanCount;
+		int GameBanCount;
+		string ReceiveUserId;
+		string ReceiveGroupId;
+	};
+}
+
 namespace osucat {
 
 	struct AdminInfo {
@@ -152,7 +163,7 @@ namespace osucat {
 				return ret;
 			}
 			else {
-				throw osucat::exception(mysql_error(&this->conn), mysql_errno(&this->conn));
+				throw osucat::database_exception(mysql_error(&this->conn), mysql_errno(&this->conn));
 			}
 		}
 
@@ -164,7 +175,7 @@ namespace osucat {
 		void UserSet(int64_t user_id, int64_t qq) {
 			try {
 				char query[1024];
-				sprintf_s(query, 1024, "insert into info (uid, qq) values (%I64d, %I64d)", user_id, qq);
+				sprintf_s(query, 1024, "insert into osu_user_list (uid, qq) values (%I64d, %I64d)", user_id, qq);
 				this->Insert(query);
 			}
 			catch (osucat::database_exception) {
@@ -225,51 +236,51 @@ namespace osucat {
 		}
 
 		int64_t osu_getuserid(int64_t qq) {
-			try { return std::stoll(this->Select("select uid from info where qq=" + std::to_string(qq))[0]["uid"].get<std::string>()); }
+			try { return std::stoll(this->Select("select uid from osu_user_list where qq=" + std::to_string(qq))[0]["uid"].get<std::string>()); }
 			catch (osucat::database_exception) {}
 		}
 
 		int osu_getunsetstatus(int64_t uid) {
-			try { return std::stol(this->Select("select verifying_unset from info where uid=" + std::to_string(uid))[0]["verifying_unset"].get<std::string>()); }
+			try { return std::stol(this->Select("select unset from osu_user_list where uid=" + std::to_string(uid))[0]["unset"].get<std::string>()); }
 			catch (osucat::database_exception) { return 0; }
 		}
 
 		void osu_changeunsetstatus(int64_t uid, bool status) {
-			this->Update("update info set verifying_unset=" + std::to_string(status == true ? 1 : 0) + " where uid=" + std::to_string(uid));
+			this->Update("update osu_user_list set unset=" + std::to_string(status == true ? 1 : 0) + " where uid=" + std::to_string(uid));
 		}
 
 		void osu_deleteuser(int64_t uid) {
-			this->Delete("DELETE from info_record where uid = " + std::to_string(uid));
-			this->Delete("DELETE from info where uid = " + std::to_string(uid));
+			this->Delete("DELETE from osu_user_records where uid = " + std::to_string(uid));
+			this->Delete("DELETE from osu_user_list where uid = " + std::to_string(uid));
 		}
 
 		void osu_UpdatePPlus(int64_t uid, float pp, osu_api::v1::pplus_info pi) {
 			if (this->osu_GetUserPreviousPP(uid) == 0.0) {
-				this->Insert("insert into pplus (uid, pp, jump, flow, pre, acc, spd, sta) values (" + std::to_string(uid)
+				this->Insert("insert into osu_pplus (uid, pp, jump, flow, pre, acc, spd, sta) values (" + std::to_string(uid)
 					+ ", " + std::to_string(pp) + ", " + std::to_string(pi.jump) + ", " + std::to_string(pi.flow) + ", "
 					+ std::to_string(pi.pre) + ", " + std::to_string(pi.acc) + ", " + std::to_string(pi.spd) + ", "
 					+ std::to_string(pi.sta) + ")");
 			}
 			else {
-				this->Update("update pplus set pp=" + std::to_string(pp) + ",jump=" + std::to_string(pi.jump)
+				this->Update("update osu_pplus set pp=" + std::to_string(pp) + ",jump=" + std::to_string(pi.jump)
 					+ ",flow=" + std::to_string(pi.flow) + ",pre=" + std::to_string(pi.pre) + ",acc=" + std::to_string(pi.acc)
 					+ ",spd=" + std::to_string(pi.spd) + ",sta=" + std::to_string(pi.sta) + " where uid=" + std::to_string(uid));
 			}
 		}
 
 		float osu_GetUserPreviousPP(int64_t uid) {
-			try { return std::stof(this->Select("select pp from pplus where uid=" + std::to_string(uid))[0]["pp"].get<std::string>()); }
+			try { return std::stof(this->Select("select pp from osu_pplus where uid=" + std::to_string(uid))[0]["pp"].get<std::string>()); }
 			catch (osucat::database_exception) { return 0.0; }
 		}
 
 		int osu_GetUserDefaultGameMode(int64_t uid) {
-			try { return std::stoi(this->Select("select mainmode from info where uid=" + std::to_string(uid))[0]["mainmode"].get<std::string>()); }
+			try { return std::stoi(this->Select("select mode from osu_user_list where uid=" + std::to_string(uid))[0]["mode"].get<std::string>()); }
 			catch (osucat::database_exception& e) { return 0; }
 		}
 
 		void osu_GetUserPreviousPPlus(int64_t uid, osu_api::v1::pplus_info* pi) {
 			try {
-				json result = this->Select("select * from pplus where uid=" + std::to_string(uid));
+				json result = this->Select("select * from osu_pplus where uid=" + std::to_string(uid));
 				pi->acc = stoi(result[0]["acc"].get<std::string>());
 				pi->flow = stoi(result[0]["flow"].get<std::string>());
 				pi->spd = stoi(result[0]["spd"].get<std::string>());
@@ -289,7 +300,7 @@ namespace osucat {
 
 		int osu_getshownbadges(int64_t uid) {
 			try {
-				int value = std::stol(this->Select("select shownbadgeID from info where uid=" + std::to_string(uid))[0]["shownbadgeID"].get<std::string>());
+				int value = std::stol(this->Select("select shownbadgeID from osu_user_list where uid=" + std::to_string(uid))[0]["shownbadgeID"].get<std::string>());
 				if (value != 25565) { return value; }
 				else { return EOF; }
 			}
@@ -411,18 +422,18 @@ namespace osucat {
 		}
 
 		void osu_UpdatePPRecord(int64_t qq, int64_t bid) {
-			if (this->osu_GetPPRecord(qq) == EOF) { this->Insert("insert into pprecord (qq, bid) values (" + std::to_string(qq) + ", " + std::to_string(bid) + ")"); }
-			else { this->Update("update pprecord set bid=" + std::to_string(bid) + " where qq=" + std::to_string(qq)); }
+			if (this->osu_GetPPRecord(qq) == EOF) { this->Insert("insert into osu_pprecord (qq, bid) values (" + std::to_string(qq) + ", " + std::to_string(bid) + ")"); }
+			else { this->Update("update osu_pprecord set bid=" + std::to_string(bid) + " where qq=" + std::to_string(qq)); }
 		}
 
 		int64_t osu_GetPPRecord(int64_t qq) {
-			try { return std::stoll(this->Select("select bid from pprecord where qq=" + std::to_string(qq))[0]["bid"].get<std::string>()); }
+			try { return std::stoll(this->Select("select bid from osu_pprecord where qq=" + std::to_string(qq))[0]["bid"].get<std::string>()); }
 			catch (osucat::database_exception) { return EOF; }
 		}
 
 		int osu_SetUserMainMode(int64_t qq, int mode) {
 			char buffer[1024];
-			sprintf_s(buffer, 1024, "update info set mainmode=%d where qq=%lld", mode, qq);
+			sprintf_s(buffer, 1024, "update osu_user_list set mode=%d where qq=%lld", mode, qq);
 			try {
 				this->Update(buffer);
 				return 1;
@@ -513,7 +524,7 @@ namespace osucat {
 		}
 
 		void osu_setshownBadges(int64_t uid, int badgeid) {
-			try { this->Update("update info set shownbadgeID=" + std::to_string(badgeid) + " where uid=" + std::to_string(uid)); }
+			try { this->Update("update osu_user_list set shownbadgeID=" + std::to_string(badgeid) + " where uid=" + std::to_string(uid)); }
 			catch (osucat::database_exception) {}
 		}
 
@@ -537,7 +548,7 @@ namespace osucat {
 		Badgeinfo osu_getBadgeInfo(int ID) {
 			Badgeinfo bi;
 			try {
-				json j = this->Select("SELECT * from badge_list where id=" + std::to_string(ID));
+				json j = this->Select("SELECT * from osu_badge_list where id=" + std::to_string(ID));
 				bi.id = stoi(j[0]["id"].get<std::string>());
 				bi.name = j[0]["name"].get<std::string>();
 				bi.name_chinese = j[0]["name_chinese"].get<std::string>();
@@ -555,7 +566,7 @@ namespace osucat {
 		std::vector<int> osu_GetBadgeList(int64_t uid) {
 			char query[1024];
 			std::vector<int> ret;
-			sprintf_s(query, 1024, "select badge from badge where uid=%lld", uid);
+			sprintf_s(query, 1024, "select osu_badge from badge where uid=%lld", uid);
 			try {
 				badgeSystem::main bgs;
 				json result = this->Select(query);
@@ -575,18 +586,18 @@ namespace osucat {
 
 		void osu_addbadge(int64_t uid, std::string str) {
 			std::vector<int> tmp = this->osu_GetBadgeList(uid);
-			if (tmp.size() == 0) { this->Insert("insert into badge (uid, badge) values (" + std::to_string(uid) + ", \"" + str + "\")"); }
-			else { this->Update("update badge set badge=\"" + str + "\" where uid=" + std::to_string(uid)); }
+			if (tmp.size() == 0) { this->Insert("insert into osu_badge (uid, badge) values (" + std::to_string(uid) + ", \"" + str + "\")"); }
+			else { this->Update("update osu_badge set badge=\"" + str + "\" where uid=" + std::to_string(uid)); }
 		}
 
 		bool add_blacklist(int64_t qq) {
 			try {
-				this->Insert("INSERT INTO blacklist (qq,is_blocked) values(" + std::to_string(qq) + ",1)");
+				this->Insert("INSERT INTO global_blacklist (qq,is_blocked) values(" + std::to_string(qq) + ",1)");
 				try {
 					int64_t uid = this->osu_getuserid(qq);
 					if (uid != 0) {
-						this->Delete("DELETE from info where uid = " + std::to_string(uid));
-						this->Delete("DELETE from info_record where uid = " + std::to_string(uid));
+						this->Delete("DELETE from osu_user_list where uid = " + std::to_string(uid));
+						this->Delete("DELETE from osu_user_records where uid = " + std::to_string(uid));
 					}
 				}
 				catch (osucat::database_exception) {}
@@ -602,14 +613,14 @@ namespace osucat {
 		}
 
 		int is_Blocked(int64_t qq) {
-			try { return std::stoi(this->Select("select is_blocked from blacklist where qq=" + std::to_string(qq))[0]["is_blocked"].get<std::string>()); }
+			try { return std::stoi(this->Select("select is_blocked from global_blacklist where qq=" + std::to_string(qq))[0]["is_blocked"].get<std::string>()); }
 			catch (osucat::database_exception) { return 0; }
 		}
 
 		bool osu_setNewBadge(Badgeinfo bi, int* id) {
 			try {
-				this->Insert("INSERT INTO badge_list (name,name_chinese,description) VALUES (\"" + bi.name + "\",\"" + bi.name_chinese + "\",\"" + bi.description + "\")");
-				json j = this->Select("Select id from badge_list");
+				this->Insert("INSERT INTO osu_badge_list (name,name_chinese,description) VALUES (\"" + bi.name + "\",\"" + bi.name_chinese + "\",\"" + bi.description + "\")");
+				json j = this->Select("Select id from osu_badge_list");
 				*id = j.size() - 1;
 				return true;
 			}
@@ -623,13 +634,13 @@ namespace osucat {
 			}
 			std::string query;
 			if (f = 1) {
-				query = u8"UPDATE badge_list set name=\"" + bi.name + "\" where id=" + std::to_string(bi.id);
+				query = u8"UPDATE osu_badge_list set name=\"" + bi.name + "\" where id=" + std::to_string(bi.id);
 			}
 			else if (f = 2) {
-				query = u8"UPDATE badge_list set name_chinese=\"" + bi.name_chinese + "\" where id=" + std::to_string(bi.id);
+				query = u8"UPDATE osu_badge_list set name_chinese=\"" + bi.name_chinese + "\" where id=" + std::to_string(bi.id);
 			}
 			else if (f = 3) {
-				query = u8"UPDATE badge_list set description=\"" + bi.description + "\" where id=" + std::to_string(bi.id);
+				query = u8"UPDATE osu_badge_list set description=\"" + bi.description + "\" where id=" + std::to_string(bi.id);
 			}
 			try {
 				this->Update(query);
@@ -806,138 +817,96 @@ namespace osucat {
 			catch (osucat::database_exception) { return 0; }
 		}
 
-		bool reloadAdmin() {
-			try {
-				json j = this->Select("SELECT * FROM info where role=1 or role=2");
-				adminlist.clear();
-				for (int i = 0; i < j.size(); ++i) {
-					AdminInfo s;
-					s.user_id = stoll(j[i]["qq"].get<std::string>());
-					s.role = stoi(j[i]["role"].get<std::string>());
-					adminlist.push_back(s);
-				}
-				return true;
+		void reloadAdmin() {
+			json j = this->Select("SELECT * FROM osu_user_list where role=1 or role=2");
+			adminlist.clear();
+			for (int i = 0; i < j.size(); ++i) {
+				AdminInfo s;
+				s.user_id = stoll(j[i]["qq"].get<std::string>());
+				s.role = stoi(j[i]["role"].get<std::string>());
+				adminlist.push_back(s);
 			}
-			catch (osucat::database_exception) { return false; }
 		}
 
-		/// /// /// /// /// outdated /// /// /// /// ///
+		vector<steamcat::CSGOUserInfo> steam_get_csgo_listen_list() {
+			vector <steamcat::CSGOUserInfo> cui;
+			json j;
+			try {
+				j = this->Select(R"(SELECT * from `steam_ban_listen` where Available=1)");
+				for (int i = 0; i < j.size(); ++i) {
+					steamcat::CSGOUserInfo t;
+					t.SteamId = stoll(j[i]["SteamId"].get<string>());
+					t.Available = stoi(j[i]["Available"].get<string>()) == 1 ? true : false;
+					t.VACBanCount = stoi(j[i]["VACBanCount"].get<string>());
+					t.GameBanCount = stoi(j[i]["GameBanCount"].get<string>());
+					t.ReceiveUserId = j[i]["ReceiveUserId"].get<string>();
+					t.ReceiveGroupId = j[i]["ReceiveGroupId"].get<string>();
+					cui.push_back(t);
+				}
+			}
+			catch (osucat::database_exception &ex) { steamcat::CSGOUserInfo t; t.SteamId = -1; t.Available = false; t.ReceiveUserId = "null"; t.ReceiveGroupId = "null"; cui.push_back(t); }
+			catch (std::exception& ex) { cout << ex.what() << endl; }
+			return cui;
+		}
 
-		//vector<osucat::steamcheck::CSGOUserInfo> steam_get_csgo_listen_list() {
-		//	vector <osucat::steamcheck::CSGOUserInfo> cui;
-		//	string query = R"(SELECT * from `steam-ban-check` where IsBanned=0)";
-		//	json j;
-		//	try {
-		//		j = this->Select(query);
-		//		for (int i = 0; i < j.size(); ++i) {
-		//			osucat::steamcheck::CSGOUserInfo t;
-		//			t.SteamId = stoll(j[i]["SteamId"].get<string>());
-		//			t.IsBanned = stoi(j[i]["IsBanned"].get<string>()) == 1 ? true : false;
-		//			t.ReceiveUserId = j[i]["ReceiveUserId"].get<string>();
-		//			t.ReceiveGroupId = j[i]["ReceiveGroupId"].get<string>();
-		//			cui.push_back(t);
-		//		}
-		//	}
-		//	catch (osucat::database_exception) {
-		//		osucat::steamcheck::CSGOUserInfo t;
-		//		t.SteamId = -1;
-		//		t.IsBanned = false;
-		//		t.ReceiveUserId = "null";
-		//		t.ReceiveGroupId = "null";
-		//		cui.push_back(t);
-		//	}
-		//	catch (std::exception& ex) {
-		//		cout << ex.what() << endl;
-		//	}
-		//	return cui;
-		//}
+		void steam_change_ban_stats(int64_t SteamId) {
+			this->Update("UPDATE `steam_ban_listen` SET Available=0 WHERE SteamId=" + std::to_string(SteamId));
+		}
 
-		//void steam_change_ban_stats(int64_t SteamId) {
-		//	this->Update("UPDATE `steam-ban-check` SET IsBanned=1 WHERE SteamId=" + std::to_string(SteamId));
-		//}
+		bool steam_add_ban_listening(int64_t SteamId, int VacCount, int GameCount, int64_t ReceiveUserId = EOF, int64_t ReceiveGroupId = EOF) {
+			string query = "INSERT INTO `steam_ban_listen` (SteamId,Available,VACBanCount,GameBanCount,ReceiveUserId,ReceiveGroupId) VALUES (";
+			query += to_string(SteamId) + ",1," + to_string(VacCount) + "," + to_string(GameCount) + ",";
+			if (ReceiveUserId == EOF) { query += "\"null\","; }
+			else { query += "\"" + std::to_string(ReceiveUserId) + "\","; }
+			if (ReceiveGroupId == EOF) { query += "\"null\")"; }
+			else { query += "\"" + std::to_string(ReceiveGroupId) + "\")"; }
+			try { this->Insert(query); }
+			catch (osucat::database_exception) {
+				try { this->Update("UPDATE `steam_ban_listen` SET VACBanCount=" + to_string(VacCount) + ",GameBanCount=" + to_string(GameCount) + " WHERE SteamId=" + to_string(SteamId)); }
+				catch (osucat::database_exception) {}
+				return false;
+			}
+			return true;
+		}
 
-		//bool steam_add_ban_listening(int64_t SteamId, int64_t ReceiveUserId = EOF, int64_t ReceiveGroupId = EOF) {
-		//	string query = "INSERT INTO `steam-ban-check` (SteamId,IsBanned,ReceiveUserId,ReceiveGroupId) VALUES (";
-		//	query += to_string(SteamId) + ",0,";
-		//	if (ReceiveUserId == EOF) {
-		//		query += "\"null\",";
-		//	}
-		//	else {
-		//		query += "\"" + std::to_string(ReceiveUserId) + "\",";
-		//	}
-		//	if (ReceiveGroupId == EOF) {
-		//		query += "\"null\")";
-		//	}
-		//	else {
-		//		query += "\"" + std::to_string(ReceiveGroupId) + "\")";
-		//	}
-		//	try {
-		//		this->Insert(query);
-		//	}
-		//	catch (osucat::database_exception) {
-		//		//用户已存在于监听列表中
-		//		return false;
-		//	}
-		//	return true;
-		//}
+		bool steam_change_ban_listening_receive_groupid(int64_t SteamId, int64_t ReceiveGroupId) {
+			json j = this->Select("SELECT ReceiveGroupId FROM `steam_ban_listen` WHERE SteamId=" + std::to_string(SteamId));
+			string tmp = j[0]["ReceiveGroupId"].get<string>();
+			if (tmp.find(';') == string::npos) {
+				vector<string> t = cqhttp_api::utils::string_split(tmp, ';');
+				for (int i = 0; i < t.size(); ++i) { if (t[i] == to_string(ReceiveGroupId)) { return false; } }
+				this->Update("UPDATE `steam_ban_listen` SET ReceiveGroupId=\"" + tmp + ";" + std::to_string(ReceiveGroupId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId));
+				return true;
+			}
+			else {
+				if (tmp == to_string(ReceiveGroupId)) { return false; }
+				if (tmp == "null") { this->Update("UPDATE `steam_ban_listen` SET ReceiveGroupId=\"" + std::to_string(ReceiveGroupId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId)); }
+				else { this->Update("UPDATE `steam_ban_listen` SET ReceiveGroupId=\"" + tmp + ";" + std::to_string(ReceiveGroupId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId)); }
+				return true;
+			}
+		}
 
-		//bool steam_change_ban_listening_receive_groupid(int64_t SteamId, int64_t ReceiveGroupId) {
-		//	json j = this->Select("SELECT ReceiveGroupId FROM `steam-ban-check` WHERE SteamId=" + std::to_string(SteamId));
-		//	string tmp = j[0]["ReceiveGroupId"].get<string>();
-		//	if (tmp.find(';') == string::npos) {
-		//		vector<string> t = cqhttp_api::utils::string_split(tmp, ';');
-		//		for (int i = 0; i < t.size(); ++i) {
-		//			if (t[i] == to_string(ReceiveGroupId)) {
-		//				return false;
-		//			}
-		//		}
-		//		this->Update("UPDATE `steam-ban-check` SET ReceiveGroupId=\"" + tmp + ";" + std::to_string(ReceiveGroupId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId));
-		//		return true;
-		//	}
-		//	else {
-		//		if (tmp == to_string(ReceiveGroupId)) {
-		//			return false;
-		//		}
-		//		if (tmp == "null") {
-		//			this->Update("UPDATE `steam-ban-check` SET ReceiveGroupId=\"" + std::to_string(ReceiveGroupId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId));
-		//		}
-		//		else {
-		//			this->Update("UPDATE `steam-ban-check` SET ReceiveGroupId=\"" + tmp + ";" + std::to_string(ReceiveGroupId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId));
-		//		}
-		//		return true;
-		//	}
-		//}
-
-		//bool steam_change_ban_listening_receive_userid(int64_t SteamId, int64_t ReceiveUserId) {
-		//	json j = this->Select("SELECT ReceiveUserId FROM `steam-ban-check` WHERE SteamId=" + std::to_string(SteamId));
-		//	string tmp = j[0]["ReceiveUserId"].get<string>();
-		//	if (tmp.find(';') == string::npos) {
-		//		vector<string> t = cqhttp_api::utils::string_split(tmp, ';');
-		//		for (int i = 0; i < t.size(); ++i) {
-		//			if (t[i] == to_string(ReceiveUserId)) {
-		//				return false;
-		//			}
-		//		}
-		//		this->Update("UPDATE `steam-ban-check` SET ReceiveUserId=\"" + tmp + ";" + std::to_string(ReceiveUserId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId));
-		//		return true;
-		//	}
-		//	else {
-		//		if (tmp == to_string(ReceiveUserId)) {
-		//			return false;
-		//		}
-		//		if (tmp == "null") {
-		//			this->Update("UPDATE `steam-ban-check` SET ReceiveUserId=\"" + std::to_string(ReceiveUserId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId));
-		//		}
-		//		else {
-		//			this->Update("UPDATE `steam-ban-check` SET ReceiveUserId=\"" + tmp + ";" + std::to_string(ReceiveUserId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId));
-		//		}
-		//		return true;
-		//	}
-		//}
+		bool steam_change_ban_listening_receive_userid(int64_t SteamId, int64_t ReceiveUserId) {
+			json j = this->Select("SELECT ReceiveUserId FROM `steam_ban_listen` WHERE SteamId=" + std::to_string(SteamId));
+			string tmp = j[0]["ReceiveUserId"].get<string>();
+			if (tmp.find(';') == string::npos) {
+				vector<string> t = cqhttp_api::utils::string_split(tmp, ';');
+				for (int i = 0; i < t.size(); ++i) { if (t[i] == to_string(ReceiveUserId)) { return false; } }
+				this->Update("UPDATE `steam_ban_listen` SET ReceiveUserId=\"" + tmp + ";" + std::to_string(ReceiveUserId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId));
+				return true;
+			}
+			else {
+				if (tmp == to_string(ReceiveUserId)) { return false; }
+				if (tmp == "null") { this->Update("UPDATE `steam_ban_listen` SET ReceiveUserId=\"" + std::to_string(ReceiveUserId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId)); }
+				else { this->Update("UPDATE `steam_ban_listen` SET ReceiveUserId=\"" + tmp + ";" + std::to_string(ReceiveUserId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId)); }
+				return true;
+			}
+		}
 
 		void Close() {
 			if (this->conn.net.vio != NULL) mysql_close(&this->conn);
 		}
+
 		~Database() {
 			Close();
 		}

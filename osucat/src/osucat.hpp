@@ -11,6 +11,7 @@ using namespace cqhttp_api;
 #include "badge.hpp"
 #include "include/mysql.hpp"
 #include "image.hpp"
+#include "steamcat.hpp"
 #include "addons.hpp"
 
 namespace osucat {
@@ -178,12 +179,12 @@ namespace osucat {
 		}
 
 		static void info(const Target tar) {
-			string cmd = tar.message;
-			if (_stricmp(cmd.substr(0, 6).c_str(), u8"因佛") == 0) {
-				cmd = cmd.substr(0, 6);
+			string cmd;
+			if (_stricmp(tar.message.substr(0, 4).c_str(), "info") == 0) {
+				cmd = tar.message.substr(4);
 			}
-			else if (_stricmp(tar.message.substr(0, 4).c_str(), "info") == 0) {
-				cmd = cmd.substr(0, 4);
+			else if (_stricmp(cmd.substr(0, 6).c_str(), u8"因佛") == 0) {
+				cmd = tar.message.substr(6);
 			}
 			utils::unescape(cmd);
 			utils::string_trim(cmd);
@@ -2447,7 +2448,6 @@ namespace osucat {
 			int64_t QQ = db.osu_getqq(UserID);
 			string picPath;
 			picPath = utils::GetMiddleText(cmd, "[CQ:image,file=", ",url");
-			picPath = picPath.substr(picPath.find(',') + 6);
 			cqhttp_api::PictureInfo picInfo = cqhttp_api::getImage(picPath);
 			picPath = ".\\data\\cache\\" + picPath + "." + picInfo.format;
 			if (!utils::fileExist(picPath)) {
@@ -2492,7 +2492,6 @@ namespace osucat {
 			int64_t QQ = db.osu_getqq(UserID);
 			string picPath;
 			picPath = utils::GetMiddleText(cmd, "[CQ:image,file=", ",url");
-			picPath = picPath.substr(picPath.find(',') + 6);
 			cqhttp_api::PictureInfo picInfo = cqhttp_api::getImage(picPath);
 			picPath = ".\\data\\cache\\" + picPath + "." + picInfo.format;
 			if (!utils::fileExist(picPath)) {
@@ -2751,7 +2750,7 @@ namespace osucat {
 					Database db;
 					db.Connect();
 					int64_t QQ = db.osu_getqq(stoll(UserID));
-					send_private_message(tar, u8"你上传的Info面板通过审核啦，可以使用info指令查看~");
+					send_private_message(QQ, u8"你上传的Info面板通过审核啦，可以使用info指令查看~");
 					send_message(tar, u8"ID：" + UserID + u8" ，已成功通知用户InfoPanel已审核成功。");
 					if (tar.group_id != management_groupid) { send_group_message(management_groupid, u8"ID：" + UserID + u8" ，已成功通知用户InfoPanel已审核成功。"); }
 				}
@@ -2787,8 +2786,8 @@ namespace osucat {
 				db.Connect();
 				int64_t QQ = db.osu_getqq(stoll(UserID));
 				send_private_message(QQ, u8"你上传的Banner已被管理员驳回，详情：" + Content);
-				send_message(tar, "ID：" + UserID + u8" ，已成功通知用户Banner已被驳回。详情：" + Content);
-				if (tar.group_id != management_groupid) { send_group_message(management_groupid, "ID：" + UserID + u8" ，已成功通知用户Banner已被驳回。详情：" + Content); }
+				send_message(tar, u8"ID：" + UserID + u8" ，已成功通知用户Banner已被驳回。详情：" + Content);
+				if (tar.group_id != management_groupid) { send_group_message(management_groupid, u8"ID：" + UserID + u8" ，已成功通知用户Banner已被驳回。详情：" + Content); }
 			}
 			else {
 				send_message(tar, u8"此用户的内容不在待审核清单内。");
@@ -2819,8 +2818,8 @@ namespace osucat {
 				int64_t QQ = db.osu_getqq(stoll(UserID));
 				Target activepushTar;
 				send_private_message(QQ, u8"你上传的InfoPanel已被管理员驳回，详情：" + Content);
-				send_message(tar, "ID：" + UserID + u8" ，已成功通知用户InfoPanel已被驳回。详情：" + Content);
-				if (tar.group_id != management_groupid) { send_group_message(management_groupid, "ID：" + UserID + u8" ，已成功通知用户InfoPanel已被驳回。详情：" + Content); }
+				send_message(tar, u8"ID：" + UserID + u8" ，已成功通知用户InfoPanel已被驳回。详情：" + Content);
+				if (tar.group_id != management_groupid) { send_group_message(management_groupid, u8"ID：" + UserID + u8" ，已成功通知用户InfoPanel已被驳回。详情：" + Content); }
 			}
 			else {
 				send_message(tar, u8"此用户的内容不在待审核清单内。");
@@ -3177,7 +3176,7 @@ namespace osucat {
 		}
 
 		static void _DailyUpdate() {
-			cout << u8"osu!用户数据自动更新线程已创建" << endl;
+			cout << u8"已成功创建osu!用户数据自动更新线程。" << endl;
 			char dugtmp[256];
 			while (true) {
 				time_t now = time(NULL);
@@ -3367,6 +3366,194 @@ namespace osucat {
 			cout << dugtmp << endl;
 		}
 
+		static void _CreateDUThread() {
+			cout << u8"正在创建osu!用户数据自动更新线程..." << endl;
+			thread dailyUpdateThread(bind(&_DailyUpdate));
+			dailyUpdateThread.detach();
+		}
+
+		static void _AdminCheck() {
+			cout << u8"正在更新管理员列表..." << endl;
+			try {
+				Database db;
+				db.Connect();
+				db.reloadAdmin();
+			}
+			catch (osucat::database_exception& ex) {
+				if (ex.Code() == 1065) {
+					cout << u8"管理员列表为空，手动设置管理员后重新更新" << endl;
+				}
+				else {
+					cout << u8"无法连接至数据库，请检查数据库设置" << endl;
+				}
+			}
+			cout << u8"已成功更新管理员列表" << endl;
+		}
+
+		static void _FolderCheck() {
+			cout << u8"正在检查必要目录完整性..." << endl;
+			if (!utils::isDirExist(".\\data")) {
+				cout << "Folder 'data' does not exist, created." << endl;
+				CreateDirectoryA(".\\data", NULL);
+			}
+			if (!utils::isDirExist(".\\data\\cache")) {
+				cout << "Folder 'data\\cache' does not exist, created." << endl;
+				CreateDirectoryA(".\\data\\cache", NULL);
+			}
+			if (!utils::isDirExist(".\\data\\images")) {
+				cout << "Folder 'data\\images' does not exist, created." << endl;
+				CreateDirectoryA(".\\data\\images", NULL);
+			}
+			if (!utils::isDirExist(".\\data\\images\\osucat")) {
+				cout << "Folder 'data\\images\\osucat' does not exist, created." << endl;
+				CreateDirectoryA(".\\data\\images\\osucat", NULL);
+			}
+			if (!utils::isDirExist(".\\data\\images\\osucat\\help")) {
+				cout << "Folder 'data\\images\\osucat\\help' does not exist, created." << endl;
+				CreateDirectoryA(".\\data\\images\\osucat\\help", NULL);
+			}
+			if (!utils::isDirExist(".\\data\\images\\osucat\\custom")) {
+				cout << "Folder 'data\\images\\osucat\\custom' does not exist, created." << endl;
+				CreateDirectoryA(".\\data\\images\\osucat\\custom", NULL);
+			}
+			if (!utils::isDirExist(".\\data\\images\\osucat\\custom\\banner_verify")) {
+				cout << "Folder 'data\\images\\osucat\\banner_verify' does not exist, created." << endl;
+				CreateDirectoryA(".\\data\\images\\osucat\\custom\\banner_verify", NULL);
+			}
+			if (!utils::isDirExist(".\\data\\images\\osucat\\custom\\infopanel_verify")) {
+				cout << "Folder 'data\\images\\osucat\\infopanel_verify' does not exist, created." << endl;
+				CreateDirectoryA(".\\data\\images\\osucat\\custom\\infopanel_verify", NULL);
+			}
+			if (!utils::isDirExist(".\\work")) {
+				cout << "Folder 'work' does not exist, created." << endl;
+				CreateDirectoryA(".\\work", NULL);
+			}
+			if (!utils::isDirExist(".\\work\\avatar")) {
+				cout << "Folder 'work\\avatar' does not exist, created." << endl;
+				CreateDirectoryA(".\\work\\avatar", NULL);
+			}
+			if (!utils::isDirExist(".\\work\\background")) {
+				cout << "Folder 'work\\background' does not exist, created." << endl;
+				CreateDirectoryA(".\\work\\background", NULL);
+			}
+			if (!utils::isDirExist(".\\work\\badges")) {
+				cout << "Folder 'work\\badges' does not exist, created." << endl;
+				CreateDirectoryA(".\\work\\badges", NULL);
+			}
+			if (!utils::isDirExist(".\\work\\flags")) {
+				cout << "Folder 'work\\flags' does not exist, created." << endl;
+				CreateDirectoryA(".\\work\\flags", NULL);
+			}
+			if (!utils::isDirExist(".\\work\\fonts")) {
+				cout << "Folder 'fonts' does not exist, created." << endl;
+				CreateDirectoryA(".\\work\\fonts", NULL);
+			}
+			if (!utils::isDirExist(".\\work\\icons")) {
+				cout << "Folder 'work\\icon' does not exist, created." << endl;
+				CreateDirectoryA(".\\work\\icons", NULL);
+			}
+			if (!utils::isDirExist(".\\work\\mode_icon")) {
+				cout << "Folder 'work\\mode_icon' does not exist, created." << endl;
+				CreateDirectoryA(".\\work\\mode_icon", NULL);
+			}
+			if (!utils::isDirExist(".\\work\\mods")) {
+				cout << "Folder 'work\\mods' does not exist, created." << endl;
+				CreateDirectoryA(".\\work\\mods", NULL);
+			}
+			if (!utils::isDirExist(".\\work\\ranking")) {
+				cout << "Folder 'work\\ranking' does not exist, created." << endl;
+				CreateDirectoryA(".\\work\\ranking", NULL);
+			}
+			if (!utils::isDirExist(".\\work\\v1_cover")) {
+				cout << "Folder 'work\\v1_cover' does not exist, created." << endl;
+				CreateDirectoryA(".\\work\\v1_cover", NULL);
+			}
+			if (!utils::isDirExist(".\\work\\v1_infopanel")) {
+				cout << "Folder 'work\\v1_infopanel' does not exist, created." << endl;
+				CreateDirectoryA(".\\work\\v1_infopanel", NULL);
+			}
+			if (!utils::isDirExist(".\\work\\v2_background")) {
+				cout << "Folder 'work\\v2_background' does not exist, created." << endl;
+				CreateDirectoryA(".\\work\\v2_background", NULL);
+			}
+			if (!utils::isDirExist(".\\work\\v2_infopanel")) {
+				cout << "Folder 'work\\v2_infopanel' does not exist, created." << endl;
+				CreateDirectoryA(".\\work\\v2_infopanel", NULL);
+			}
+		}
+
+		static void _ConfigCheck() {
+			ifstream configfile(".\\osucat_config.json");
+			string config;
+			if (configfile) {
+				json j;
+				try {
+					ostringstream tmp;
+					tmp << configfile.rdbuf();
+					config = tmp.str();
+					configfile.close();
+					j = json::parse(config);
+				}
+				catch (std::exception& ex) {
+					cout << ex.what() << endl;
+					system("pause");
+					exit(-1);
+				}
+				if (j["owner_userid"].get<string>() == "") { cout << u8"未找到配置项：owner user_id!" << endl; system("pause"); exit(-1001); }
+				else owner_userid = stoll(j["owner_userid"].get<string>());
+				if (j["management_groupid"].get<string>() == "") { cout << u8"未找到配置项：management_groupid" << endl; system("pause"); exit(-1001); }
+				else management_groupid = stoll(j["management_groupid"].get<string>());
+				if (j["osu_web_apikey"].get<string>() == "") { cout << u8"未找到配置项：osu_web_apikey" << endl; system("pause"); exit(-1001); }
+				else sprintf_s(OC_OSU_API_KEY, "%s", j["osu_web_apikey"].get<string>().c_str());
+				if (j["steam_web_apikey"].get<string>() == "") { cout << u8"未找到配置项：steam_web_apikey" << endl; system("pause"); exit(-1001); }
+				else sprintf_s(SC_STEAM_API_KEY, "%s", j["steam_web_apikey"].get<string>().c_str());
+				if (!utils::fileExist(".\\go-cqhttp.exe")) { cout << "Missing go-cqhttp file." << endl; cout << "Get from https://github.com/Mrs4s/go-cqhttp/releases" << endl; system("pause"); exit(-1003); }
+				if (j["oc_server_host"].get<string>() == "") { cout << u8"未找到配置项：oc_server_host" << endl; system("pause"); exit(-1002); }
+				else sprintf_s(OC_SERVER_HOST, "%s", j["oc_server_host"].get<string>().c_str());
+				if (j["oc_server_port"].is_null()) { cout << u8"未找到配置项：oc_server_port" << endl; system("pause"); exit(-1002); }
+				else OC_SERVER_PORT = j["oc_server_port"].get<int>();
+				if (j["sql_user"].get<string>() == "") { cout << u8"未找到配置项：sql_user" << endl; system("pause"); exit(-1002); }
+				else sprintf_s(OC_SQL_USER, "%s", j["sql_user"].get<string>().c_str());
+				if (j["sql_host"].get<string>() == "") { cout << u8"未找到配置项：sql_host" << endl; system("pause"); exit(-1002); }
+				else sprintf_s(OC_SQL_HOST, "%s", j["sql_host"].get<string>().c_str());
+				if (j["sql_password"].get<string>() == "") { cout << u8"未找到配置项：sql_password" << endl; system("pause"); exit(-1002); }
+				else sprintf_s(OC_SQL_PASSWORD, "%s", j["sql_password"].get<string>().c_str());
+				if (j["sql_database"].get<string>() == "") { cout << u8"未找到配置项：sql_database" << endl; system("pause"); exit(-1002); }
+				else sprintf_s(OC_SQL_DATABASE, "%s", j["sql_database"].get<string>().c_str());
+				if (j["sql_port"].is_null()) { cout << u8"未找到配置项：sql_port" << endl; system("pause"); exit(-1002); }
+				else OC_SQL_PORT = j["sql_port"].get<int>();
+				if (j["oc_output_prefix"].is_null()) { cout << u8"未找到配置项：oc_output_prefix ，将使用默认配置项" << endl; sprintf_s(output_prefix, "%s", "[osucat]"); }
+				else sprintf_s(output_prefix, "%s", j["oc_output_prefix"].get<string>());
+			}
+			else {
+				cout << "Missing config file.\nInitializing config file..." << endl;
+				ofstream writeconfig(".\\osucat_config.json");
+				if (!writeconfig) {
+					cout << "Unable to create config file.";
+					exit(-1001);
+				}
+				json j;
+				j["osu_web_apikey"] = "";
+				j["steam_web_apikey"] = "";
+				j["debugmode"] = false;
+				j["oc_output_prefix"] = "[osucat]";
+				j["oc_server_host"] = "127.0.0.1";
+				j["oc_server_port"] = 6700;
+				j["sql_host"] = "127.0.0.1";
+				j["sql_user"] = "";
+				j["sql_password"] = "";
+				j["sql_database"] = "";
+				j["sql_port"] = 3306;
+				j["owner_userid"] = "";
+				j["management_groupid"] = "";
+				writeconfig << j.dump().c_str() << endl;
+				writeconfig.close();
+				cout << u8"配置文件已成功创建，稍后请请完成设置。";
+				system("pause");
+				exit(0);
+			}
+		}
+
 	};
 
 	class CmdParser {
@@ -3532,18 +3719,11 @@ namespace osucat {
 						}
 					}
 					if (_stricmp(tar.message.substr(0, 11).c_str(), "reloadadmin") == 0) {
-						if (tar.user_id != owner_userid) {
-							return;
-						}
-						if (db.reloadAdmin()) {
-							send_message(tar, u8"管理员列表已更新。");
-						}
-						else {
-							send_message(tar, u8"更新失败.");
-						}
-						return;
+						if (tar.user_id != owner_userid) { return; }
+						try { db.reloadAdmin(); send_message(tar, u8"管理员列表已更新。"); }
+						catch (osucat::database_exception) { send_message(tar, u8"更新失败."); }
 					}
-					//if (steamcheck::csgocheck::cmdParse(msg, tar, senderinfo, params))return true;
+					steamcat::cmdParser::parse(tar, sdr); //steamcat
 					if (tar.type == Target::Type::GROUP) if (db.isGroupEnable(tar.group_id, 4) == 0) return; //拦截娱乐模块
 					osucat::addons::CmdParser::parser(tar, sdr);
 				}

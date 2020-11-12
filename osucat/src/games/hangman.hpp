@@ -1,6 +1,5 @@
 #pragma once
 
-#include<string>
 #define HANGMAN_MOD_E	0x01
 #define	HANGMAN_MOD_H	0x02
 #define	HANGMAN_MOD_D	0x04

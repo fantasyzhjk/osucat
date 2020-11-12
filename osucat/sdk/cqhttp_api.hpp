@@ -4,8 +4,7 @@
 
 char output_prefix[512];
 char wsfulladdress[1024];
-char wshost[64];
-int wsport;
+
 static easywsclient::WebSocket::pointer gwsp = NULL;
 
 namespace cqhttp_api {
@@ -201,7 +200,7 @@ namespace cqhttp_api {
 		rtn.url = "";
 		rtn.format = "";
 		try {
-			std::string data = osucat::NetConnection::HttpPost("http://127.0.0.1:5700/get_image", jp);
+			std::string data = osucat::NetConnection::HttpPost("http://" + to_string(OC_SERVER_HOST) + ":5700/get_image", jp);
 			json j = json::parse(data)["data"];
 			rtn.size = j["size"].get<int32_t>();
 			rtn.filename = j["filename"].get<std::string>();
@@ -209,7 +208,12 @@ namespace cqhttp_api {
 			rtn.format = rtn.filename.substr(rtn.filename.length() - 4);
 		}
 		catch (osucat::NetWork_Exception& ex) {
-			std::cout << ex.Show() << std::endl;
+		}
+		catch (std::exception) {
+			rtn.size = 0;
+			rtn.filename = "";
+			rtn.url = "";
+			rtn.format = "";
 		}
 		char msg[4096];
 		sprintf_s(msg,
