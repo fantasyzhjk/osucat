@@ -566,7 +566,7 @@ namespace osucat {
 		std::vector<int> osu_GetBadgeList(int64_t uid) {
 			char query[1024];
 			std::vector<int> ret;
-			sprintf_s(query, 1024, "select osu_badge from badge where uid=%lld", uid);
+			sprintf_s(query, 1024, "SELECT badge from osu_badge where uid=%lld", uid);
 			try {
 				badgeSystem::main bgs;
 				json result = this->Select(query);
