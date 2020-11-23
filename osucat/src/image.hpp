@@ -118,7 +118,7 @@ namespace osucat {
 		Info.density(Point(300, 300)); //Í¼Ïñ·Ö±æÂÊ
 		TypeMetric metric;
 
-		bool isCoverExist = cqhttp_api::utils::fileExist("./work/v1_cover/"+ to_string(data.user_info.user_id) + ".jpg");
+		bool isCoverExist = cqhttp_api::utils::fileExist("./work/v1_cover/" + to_string(data.user_info.user_id) + ".jpg");
 		sprintf_s(path_temp, 512, "./work/v1_cover/%lld.jpg", data.user_info.user_id);
 		// cover
 		if (isCoverExist == false) {
@@ -130,8 +130,8 @@ namespace osucat {
 					cqhttp_api::utils::randomNum(1, 8));
 				coverLink = defaultCover;
 			}
-			NetConnection::DownloadFile(coverLink, "./work/v1_cover/"+ to_string(data.user_info.user_id) + "_temp.jpg");
-			Image cover("./work/v1_cover/"+ to_string(data.user_info.user_id) + "_temp.jpg");
+			NetConnection::DownloadFile(coverLink, "./work/v1_cover/" + to_string(data.user_info.user_id) + "_temp.jpg");
+			Image cover("./work/v1_cover/" + to_string(data.user_info.user_id) + "_temp.jpg");
 			Image coverRoundrect(Geometry(1200, 350), Color("none"));
 			cover.resize(Geometry(100000, 350));
 			cover.crop(Geometry(1200, 350));
@@ -141,14 +141,14 @@ namespace osucat {
 			coverRoundrect.draw(dl);
 			coverRoundrect.composite(cover, 0, 0, InCompositeOp);
 			coverRoundrect.quality(100);
-			coverRoundrect.write("./work/v1_cover/"+ to_string(data.user_info.user_id) + ".jpg");
-			DeleteFileA(("./work/v1_cover/"+ to_string(data.user_info.user_id) + "_temp.jpg").c_str());
+			coverRoundrect.write("./work/v1_cover/" + to_string(data.user_info.user_id) + ".jpg");
+			DeleteFileA(("./work/v1_cover/" + to_string(data.user_info.user_id) + "_temp.jpg").c_str());
 		}
-		Image Cover("./work/v1_cover/"+ to_string(data.user_info.user_id) + ".jpg");
+		Image Cover("./work/v1_cover/" + to_string(data.user_info.user_id) + ".jpg");
 		Info.composite(Cover, 0, 0, OverCompositeOp);
 		// custom panel
-		if (cqhttp_api::utils::fileExist("./work/v1_infopanel/"+ to_string(data.user_info.user_id) + ".png") == true) {
-			Image Panel("./work/v1_infopanel/"+ to_string(data.user_info.user_id) + ".png");
+		if (cqhttp_api::utils::fileExist("./work/v1_infopanel/" + to_string(data.user_info.user_id) + ".png") == true) {
+			Image Panel("./work/v1_infopanel/" + to_string(data.user_info.user_id) + ".png");
 			Info.composite(Panel, 0, 0, OverCompositeOp);
 		}
 		else {
@@ -156,7 +156,7 @@ namespace osucat {
 			Info.composite(Panel, 0, 0, OverCompositeOp);
 		}
 		// avatar
-		bool isAvatarExist = cqhttp_api::utils::fileExist("./work/avatar/"+ to_string(data.user_info.user_id) + ".png");
+		bool isAvatarExist = cqhttp_api::utils::fileExist("./work/avatar/" + to_string(data.user_info.user_id) + ".png");
 		if (isAvatarExist == false) {
 			default_random_engine rand((unsigned int)time(NULL));
 			uniform_int_distribution<int> u(100000, 900000);
@@ -164,7 +164,7 @@ namespace osucat {
 			std::string name = "./work/avatar/" + to_string(data.user_info.user_id) + ".png";
 			NetConnection::DownloadFile(temp, name);
 			Image avatar(name);
-			avatar.write("./work/avatar/"+ to_string(data.user_info.user_id) + ".png");
+			avatar.write("./work/avatar/" + to_string(data.user_info.user_id) + ".png");
 		}
 		try {
 			Image avttemp(Geometry(190, 190), Color("none"));
@@ -172,13 +172,13 @@ namespace osucat {
 			dl.push_back(DrawableFillColor("white"));
 			dl.push_back(DrawableRoundRectangle(0, 0, 190, 190, 40, 40));
 			avttemp.draw(dl);
-			Image ava("./work/avatar/"+ to_string(data.user_info.user_id) + ".png");
+			Image ava("./work/avatar/" + to_string(data.user_info.user_id) + ".png");
 			ava.resize(Geometry(190, 190));
 			avttemp.composite(ava, 0, 0, InCompositeOp);
 			Info.composite(avttemp, 39, 55, OverCompositeOp);
 		}
 		catch (Magick::Exception) {
-			DeleteFileA(("./work/avatar/"+ to_string(data.user_info.user_id) + ".png").c_str());
+			DeleteFileA(("./work/avatar/" + to_string(data.user_info.user_id) + ".png").c_str());
 			Image avatardef("./work/default_avatar.png");
 			avatardef.resize(Geometry(190, 190));
 			Image avttemp(Geometry(190, 190), Color("none"));
@@ -194,7 +194,7 @@ namespace osucat {
 		Image Flags("./work/Flags/" + data.user_info.country + ".png");
 		Flags.resize(Geometry(57, 10000));
 		Info.composite(Flags, 272, 212, OverCompositeOp);
-		Image ModeIcon("./work/mode_icon/"+ to_string(data.user_info.mode) + ".png");
+		Image ModeIcon("./work/mode_icon/" + to_string(data.user_info.mode) + ".png");
 		ModeIcon.resize(Geometry(64, 64));
 		Info.composite(ModeIcon, 1125, 10, OverCompositeOp);
 
@@ -451,7 +451,7 @@ namespace osucat {
 		dl.clear();
 		// draw badge
 		if (data.badgeid != EOF) {
-			Image Badge("./work/badges/"+ to_string(data.badgeid) + ".png");
+			Image Badge("./work/badges/" + to_string(data.badgeid) + ".png");
 			Badge.resize(Geometry(86, 40));
 			dl.push_back(DrawableGravity(GravityType::UndefinedGravity));
 			Info.composite(Badge, 272, 152, OverCompositeOp);
@@ -472,8 +472,8 @@ namespace osucat {
 		Info.density(Point(300, 300));
 		TypeMetric metric;
 		// background
-		if (cqhttp_api::utils::fileExist("./work/v2_background/"+ to_string(data.user_info.user_id) + ".png") == true) {
-			Image bg("./work/v2_background/"+ to_string(data.user_info.user_id) + ".png");
+		if (cqhttp_api::utils::fileExist("./work/v2_background/" + to_string(data.user_info.user_id) + ".png") == true) {
+			Image bg("./work/v2_background/" + to_string(data.user_info.user_id) + ".png");
 			Info.composite(bg, 0, 0, OverCompositeOp);
 		}
 		else {
@@ -482,8 +482,8 @@ namespace osucat {
 			Info.composite(bg, 0, 0, OverCompositeOp);
 		}
 		// custom panel
-		if (cqhttp_api::utils::fileExist("./work/v2_infopanel/"+ to_string(data.user_info.user_id) + ".png") == true) {
-			Image Panel("./work/v2_infopanel/"+ to_string(data.user_info.user_id) + ".png");
+		if (cqhttp_api::utils::fileExist("./work/v2_infopanel/" + to_string(data.user_info.user_id) + ".png") == true) {
+			Image Panel("./work/v2_infopanel/" + to_string(data.user_info.user_id) + ".png");
 			Info.composite(Panel, 0, 0, OverCompositeOp);
 		}
 		else {
@@ -492,7 +492,7 @@ namespace osucat {
 			Info.composite(Panel, 0, 0, OverCompositeOp);
 		}
 		// avatar
-		bool isAvatarExist = cqhttp_api::utils::fileExist("./work/avatar/"+ to_string(data.user_info.user_id) + ".png");
+		bool isAvatarExist = cqhttp_api::utils::fileExist("./work/avatar/" + to_string(data.user_info.user_id) + ".png");
 		if (isAvatarExist == false) {
 			default_random_engine rand((unsigned int)time(NULL));
 			uniform_int_distribution<int> u(100000, 900000);
@@ -500,7 +500,7 @@ namespace osucat {
 			string name = "./work/avatar/" + to_string(data.user_info.user_id) + ".png";
 			NetConnection::DownloadFile(temp, name);
 			Image avatar(name);
-			avatar.write("./work/avatar/"+ to_string(data.user_info.user_id) + ".png");
+			avatar.write("./work/avatar/" + to_string(data.user_info.user_id) + ".png");
 		}
 		try {
 			Image avttemp(Geometry(410, 410), Color("none"));
@@ -508,13 +508,13 @@ namespace osucat {
 			dl.push_back(DrawableFillColor("white"));
 			dl.push_back(DrawableRoundRectangle(0, 0, 410, 410, 60, 60));
 			avttemp.draw(dl);
-			Image ava("./work/avatar/"+ to_string(data.user_info.user_id) + ".png");
+			Image ava("./work/avatar/" + to_string(data.user_info.user_id) + ".png");
 			ava.resize(Geometry(410, 410));
 			avttemp.composite(ava, 0, 0, InCompositeOp);
 			Info.composite(avttemp, 89, 106, OverCompositeOp);
 		}
 		catch (Magick::Exception) {
-			DeleteFileA(("./work/avatar/"+ to_string(data.user_info.user_id) + ".png").c_str());
+			DeleteFileA(("./work/avatar/" + to_string(data.user_info.user_id) + ".png").c_str());
 			Image avatardef("./work/avatar/default.png");
 			avatardef.resize(Geometry(415, 415));
 			Image avttemp(Geometry(410, 410), Color("none"));
@@ -930,7 +930,7 @@ namespace osucat {
 			score.draw(dl);
 
 			// avatar
-			bool isAvatarExist = cqhttp_api::utils::fileExist("./work/avatar/"+ to_string(data.score_info.user_id) + ".png");
+			bool isAvatarExist = cqhttp_api::utils::fileExist("./work/avatar/" + to_string(data.score_info.user_id) + ".png");
 
 			name = "./work/avatar/" + to_string(data.score_info.user_id) + ".png";
 			if (isAvatarExist == false) {
@@ -943,7 +943,7 @@ namespace osucat {
 				NetConnection::DownloadFile(ctemp, name);
 				Image avatar(name);
 				avatar.resize(Geometry(190, 190));
-				avatar.write("./work/avatar/"+ to_string(data.score_info.user_id) + ".png");
+				avatar.write("./work/avatar/" + to_string(data.score_info.user_id) + ".png");
 			}
 			try {
 				Image avatar(name);
@@ -959,7 +959,7 @@ namespace osucat {
 				score.composite(imtemp, 40, 425, OverCompositeOp);
 			}
 			catch (Magick::Exception) {
-				DeleteFileA(("./work/avatar/"+ to_string(data.user_info.user_id) + ".png").c_str());
+				DeleteFileA(("./work/avatar/" + to_string(data.user_info.user_id) + ".png").c_str());
 				Image avatar("./work/default_avatar.png");
 				avatar.resize(Geometry(75, 75));
 				Image imtemp(Geometry(80, 80), Color("none"));
@@ -1442,6 +1442,23 @@ namespace osucat {
 		char file[512];
 		sprintf_s(file, "%s%s.jpg", cqhttp_api::utils::rand_str().c_str(), to_string(u1d.user_info.user_id).c_str());
 		ppvspanel.write(cqhttp_api::to_string(OC_ROOT_PATH) + "\\data\\images\\osucat\\" + file);
+		return file;
+	}
+
+	string bpht_img(const std::string message) {
+		Image img(Geometry(380, 320), "none");
+		DrawableList dl;
+		img.density(Point(300, 300));
+		dl.push_back(DrawableGravity(GravityType::UndefinedGravity));
+		dl.push_back(DrawableFont("./work/fonts/Alibaba-PuHuiTi-Medium.ttf"));
+		dl.push_back(DrawablePointSize(20));
+		dl.push_back(DrawableFillColor("black"));
+		dl.push_back(DrawableText(20, 20, message));
+		img.draw(dl);
+		img.quality(100);
+		char file[512];
+		sprintf_s(file, "%s.png", cqhttp_api::utils::rand_str().c_str());
+		img.write(cqhttp_api::to_string(OC_ROOT_PATH) + "\\data\\images\\" + file);
 		return file;
 	}
 }

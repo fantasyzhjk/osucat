@@ -90,7 +90,7 @@ namespace cqhttp_api {
 		tmp += u8"[" + utils::unixTime2Str(time(NULL)) + u8"] " + output_prefix + u8"[↑]: 发送至好友 " + to_string(tar.user_id) + u8"的消息：";
 		tmp += tar.message;
 		std::cout << tmp << std::endl;
-		send(j);
+		if (!GLOBAL_TEST_MODE)send(j);
 	}
 
 	void send_group_message(Target tar, const std::string msg) {
@@ -103,7 +103,7 @@ namespace cqhttp_api {
 		tmp += u8"[" + utils::unixTime2Str(time(NULL)) + u8"] " + output_prefix + u8"[↑]: 发送至群 " + to_string(tar.group_id) + u8"的消息：";
 		tmp += tar.message;
 		std::cout << tmp << std::endl;
-		send(j);
+		if (!GLOBAL_TEST_MODE)send(j);
 	}
 
 	void send_private_message(int64_t user_id, const std::string msg) {
@@ -115,7 +115,7 @@ namespace cqhttp_api {
 		tmp += u8"[" + utils::unixTime2Str(time(NULL)) + u8"] " + output_prefix + u8"[↑]: 发送至好友 " + to_string(user_id) + u8"的消息：";
 		tmp += msg;
 		std::cout << tmp << std::endl;
-		send(j);
+		if (!GLOBAL_TEST_MODE)send(j);
 	}
 
 	void send_group_message(int64_t group_id, const std::string msg) {
@@ -127,7 +127,7 @@ namespace cqhttp_api {
 		tmp += u8"[" + utils::unixTime2Str(time(NULL)) + u8"] " + output_prefix + u8"[↑]: 发送至群 " + to_string(group_id) + u8"的消息：";
 		tmp += msg;
 		std::cout << tmp << std::endl;
-		send(j);
+		if (!GLOBAL_TEST_MODE)send(j);
 	}
 
 	void send_message(Target tar, const std::string msg) {
@@ -148,7 +148,7 @@ namespace cqhttp_api {
 			j["params"]["approve"] = true;
 			tmp += u8"[" + utils::unixTime2Str(time(NULL)) + u8"] " + output_prefix + u8"[↑]: 已通过 " + to_string(req.user_id) + u8"的好友请求。";
 			std::cout << tmp << std::endl;
-			send(j);
+			if (!GLOBAL_TEST_MODE)send(j);
 		}
 		else if (event == Request::Event::REJECT) {
 			json j;
@@ -158,7 +158,7 @@ namespace cqhttp_api {
 			j["params"]["approve"] = false;
 			tmp += u8"[" + utils::unixTime2Str(time(NULL)) + u8"] " + output_prefix + u8"[↑]: 已拒绝 " + to_string(req.user_id) + u8"的好友请求。";
 			std::cout << tmp << std::endl;
-			send(j);
+			if (!GLOBAL_TEST_MODE)send(j);
 		}
 	}
 
@@ -174,7 +174,7 @@ namespace cqhttp_api {
 				? tmp += u8"[" + utils::unixTime2Str(time(NULL)) + u8"] " + output_prefix + u8"[↑]: 已通过 " + to_string(req.user_id) + u8"的群 (" + to_string(req.group_id) + u8") 邀请请求。"
 				: tmp += u8"[" + utils::unixTime2Str(time(NULL)) + u8"] " + output_prefix + u8"[↑]: 已通过 " + to_string(req.user_id) + u8"的群 (" + to_string(req.group_id) + u8") 添加请求。";
 			std::cout << tmp << std::endl;
-			send(j);
+			if (!GLOBAL_TEST_MODE)send(j);
 		}
 		else if (event == Request::Event::REJECT) {
 			json j;
@@ -187,7 +187,7 @@ namespace cqhttp_api {
 				? tmp += u8"[" + utils::unixTime2Str(time(NULL)) + u8"] " + output_prefix + u8"[↑]: 已拒绝 " + to_string(req.user_id) + u8"的群 (" + to_string(req.group_id) + u8") 邀请请求。"
 				: tmp += u8"[" + utils::unixTime2Str(time(NULL)) + u8"] " + output_prefix + u8"[↑]: 已拒绝 " + to_string(req.user_id) + u8"的群 (" + to_string(req.group_id) + u8") 添加请求。";
 			std::cout << tmp << std::endl;
-			send(j);
+			if (!GLOBAL_TEST_MODE)send(j);
 		}
 	}
 

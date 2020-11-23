@@ -536,6 +536,70 @@ namespace osucat::osu_api::v1 {
 			}
 			return 0;
 		}
+		static int GetUserPassRecent(int64_t uid, int count, mode mode, std::vector<score_info>& info) {
+			char url[512];
+			sprintf_s(url, 512, OSU_API_V1 "get_user_recent?type=id&k=%s&u=%I64d&m=%d&limit=%d", OC_OSU_API_KEY, uid, (int)mode, count);
+			std::string response = NetConnection::HttpsGet(url);
+			if (response.length() > 50) {
+				json data = json::parse(response);
+				info.clear();
+				for (auto it : data) {
+					score_info single;
+					single.rank = it["rank"].get<std::string>();
+					if (single.rank != "F") {
+						single.beatmap_id = stoi(it["beatmap_id"].get<std::string>());
+						single.score = stoll(it["score"].get<std::string>());
+						single.combo = stoi(it["maxcombo"].get<std::string>());
+						single.n50 = stoi(it["count50"].get<std::string>());
+						single.n100 = stoi(it["count100"].get<std::string>());
+						single.n300 = stoi(it["count300"].get<std::string>());
+						single.nkatu = stoi(it["countkatu"].get<std::string>());
+						single.ngeki = stoi(it["countgeki"].get<std::string>());
+						single.nmiss = stoi(it["countmiss"].get<std::string>());
+						single.mods = stoi(it["enabled_mods"].get<std::string>());
+						single.user_id = stoi(it["user_id"].get<std::string>());
+						tm time_temp;
+						cqhttp_api::utils::fakestrptime(it["date"].get<std::string>().c_str(), "%Y-%m-%d %H:%M:%S", &time_temp);
+						single.achieved_timestamp = (long)mktime(&time_temp) + 16 * 3600;
+						info.push_back(single);
+					}
+				}
+				return info.size();
+			}
+			return 0;
+		}
+		static int GetUserPassRecent(const std::string& username, int count, mode mode, std::vector<score_info>& info) {
+			char url[512];
+			sprintf_s(url, 512, OSU_API_V1 "get_user_recent?type=string&k=%s&u=%s&m=%d&limit=%d", OC_OSU_API_KEY, username.c_str(), (int)mode, count);
+			std::string response = NetConnection::HttpsGet(url);
+			if (response.length() > 50) {
+				json data = json::parse(response);
+				info.clear();
+				for (auto it : data) {
+					score_info single;
+					single.rank = it["rank"].get<std::string>();
+					if (single.rank != "F") {
+						single.beatmap_id = stoi(it["beatmap_id"].get<std::string>());
+						single.score = stoll(it["score"].get<std::string>());
+						single.combo = stoi(it["maxcombo"].get<std::string>());
+						single.n50 = stoi(it["count50"].get<std::string>());
+						single.n100 = stoi(it["count100"].get<std::string>());
+						single.n300 = stoi(it["count300"].get<std::string>());
+						single.nkatu = stoi(it["countkatu"].get<std::string>());
+						single.ngeki = stoi(it["countgeki"].get<std::string>());
+						single.nmiss = stoi(it["countmiss"].get<std::string>());
+						single.mods = stoi(it["enabled_mods"].get<std::string>());
+						single.user_id = stoi(it["user_id"].get<std::string>());
+						tm time_temp;
+						cqhttp_api::utils::fakestrptime(it["date"].get<std::string>().c_str(), "%Y-%m-%d %H:%M:%S", &time_temp);
+						single.achieved_timestamp = (long)mktime(&time_temp) + 16 * 3600;
+						info.push_back(single);
+					}
+				}
+				return info.size();
+			}
+			return 0;
+		}
 		static int GetUserBest(int64_t uid, int count, mode mode, std::vector<score_info>& info) {
 			char url[512];
 			sprintf_s(url,

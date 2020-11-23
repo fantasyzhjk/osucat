@@ -237,7 +237,7 @@ namespace osucat {
 
 		int64_t osu_getuserid(int64_t qq) {
 			try { return std::stoll(this->Select("select uid from osu_user_list where qq=" + std::to_string(qq))[0]["uid"].get<std::string>()); }
-			catch (osucat::database_exception) {}
+			catch (osucat::database_exception) { return 0; }
 		}
 
 		int osu_getunsetstatus(int64_t uid) {
@@ -476,6 +476,8 @@ namespace osucat {
 					return std::stoi(result[0]["entertainment"].get<std::string>());
 				case 5:
 					return std::stoi(result[0]["repeater"].get<std::string>());
+				default:
+					return 1;
 				}
 			}
 			catch (osucat::database_exception) {

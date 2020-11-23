@@ -10,8 +10,12 @@ namespace cqhttp_api {
 		switch (type) {
 		case Type::MESSAGE:
 			Event::on_message(tar, sdr);
+			break;
 		case Type::REQUEST:
 			Event::on_request(req);
+			break;
+		default:
+			break;
 		}
 	}
 	void wsclient() {

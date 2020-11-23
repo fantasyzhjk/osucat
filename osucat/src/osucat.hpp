@@ -186,6 +186,7 @@ namespace osucat {
 			else if (_stricmp(cmd.substr(0, 6).c_str(), u8"因佛") == 0) {
 				cmd = tar.message.substr(6);
 			}
+			else return;
 			utils::unescape(cmd);
 			utils::string_trim(cmd);
 			utils::string_replace(cmd, u8"：", ":");
@@ -442,7 +443,8 @@ namespace osucat {
 		static void recent(const Target tar) {
 			string cmd;
 			if (_stricmp(tar.message.substr(0, 6).c_str(), "recent") == 0) { cmd = tar.message.substr(6); }
-			else if (_stricmp(tar.message.substr(0, 2).c_str(), "pr") == 0) { cmd = tar.message.substr(2); }
+			else if (_stricmp(tar.message.substr(0, 3).c_str(), "rct") == 0) { cmd = tar.message.substr(3); }
+			else if (_stricmp(tar.message.substr(0, 2).c_str(), "re") == 0) { cmd = tar.message.substr(2); }
 			else return;
 			Database db;
 			db.Connect();
@@ -703,6 +705,271 @@ namespace osucat {
 			utils::_DelayDelTmpFile(to_string(OC_ROOT_PATH) + "\\data\\images\\" + fileStr);
 		}
 
+		static void pass_recent(const Target tar) {
+			string cmd = tar.message.substr(2);
+			Database db;
+			db.Connect();
+			db.addcallcount();
+			cmd = utils::unescape(cmd);
+			utils::string_trim(cmd);
+			utils::string_replace(cmd, u8"：", ":");
+			utils::string_replace(cmd, "[CQ:", "");
+			vector<osucat::osu_api::v1::score_info> si;
+			osucat::osu_api::v1::user_info ui = { 0 };
+			int temp;
+			osu_api::v1::mode gamemode;
+			gamemode = osu_api::v1::mode::std;
+			string username = "";
+			string beatmap;
+			int64_t userid;
+			char beatmap_url[512];
+			if (cmd.length() > 0) {
+				if (cmd[0] == ':') {
+					userid = db.osu_getuserid(tar.user_id);
+					if (userid == 0) {
+						cqhttp_api::send_message(tar, 用户没有绑定osu账号);
+						return;
+					}
+					else {
+						try {
+							if (utils::isNum(cmd.substr(cmd.length() - 1))) {
+								temp = stoi(cmd.substr(cmd.length() - 1));
+							}
+							else {
+								cqhttp_api::send_message(tar, 英文模式名提示);
+								return;
+							}
+							if (temp < 4 && temp > -1) {
+								gamemode = (osu_api::v1::mode)temp;
+							}
+							else {
+								gamemode = (osu_api::v1::mode)db.osu_GetUserDefaultGameMode(userid);
+							}
+						}
+						catch (std::exception) {
+							gamemode = (osu_api::v1::mode)db.osu_GetUserDefaultGameMode(userid);
+						}
+					}
+				}
+				else if (cmd[0] != ':') {
+					if (cmd.find(':') != string::npos) {
+						if (cmd.find("at,qq=") != string::npos) {
+							userid = db.osu_getuserid(stoll(utils::GetMiddleText(cmd, "=", "]")));
+							if (userid == 0) {
+								cqhttp_api::send_message(tar, 被查询的用户未绑定osu账号);
+								return;
+							}
+						}
+						else {
+							try {
+								username = cmd.substr(0, cmd.find(':'));
+								if (username.length() < 1) username = "%^%^%^!*(^&";
+							}
+							catch (std::exception) {
+								username = "%^%^%^!*(^&";
+							}
+						}
+						try {
+							if (utils::isNum(cmd.substr(cmd.find(':') + 1))) {
+								temp = stoi(cmd.substr(cmd.find(':') + 1));
+							}
+							else {
+								cqhttp_api::send_message(tar, 英文模式名提示);
+								return;
+							}
+						}
+						catch (std::exception) {
+							temp = 0;
+						}
+						if (temp < 4 && temp > -1) {
+							gamemode = (osu_api::v1::mode)temp;
+						}
+						else {
+							gamemode = osu_api::v1::mode::std;
+						};
+					}
+					else {
+						if (cmd.find("at,qq=") != string::npos) {
+							userid = db.osu_getuserid(stoll(utils::GetMiddleText(cmd, "=", "]")));
+							if (userid == 0) {
+								cqhttp_api::send_message(tar, 被查询的用户未绑定osu账号);
+								return;
+							}
+						}
+						else {
+							username = cmd;
+						}
+						if (username.empty()) {
+							if (osu_api::v1::api::GetUser(userid, osu_api::v1::mode::std, &ui) == 0) {
+								cqhttp_api::send_message(tar, 所绑定的用户已被bacho封禁);
+								return;
+							}
+							else {
+								gamemode = (osu_api::v1::mode)db.osu_GetUserDefaultGameMode(ui.user_id);
+							}
+						}
+						else {
+							utils::string_trim(cmd);
+							if (osu_api::v1::api::GetUser(cmd, osu_api::v1::mode::std, &ui) == 0) {
+								cqhttp_api::send_message(tar, 未从bancho检索到要查询的用户信息);
+								return;
+							}
+							else {
+								gamemode = (osu_api::v1::mode)db.osu_GetUserDefaultGameMode(ui.user_id);
+							}
+						}
+					}
+				}
+			}
+			else {
+				userid = db.osu_getuserid(tar.user_id);
+				if (userid == 0) {
+					cqhttp_api::send_message(tar, 用户没有绑定osu账号);
+					return;
+				}
+				else {
+					gamemode = (osu_api::v1::mode)db.osu_GetUserDefaultGameMode(userid);
+				}
+			}
+			if (username.empty()) {
+				if (osu_api::v1::api::GetUser(userid, gamemode, &ui) == 0) {
+					cqhttp_api::send_message(tar, u8"没有找到记录...");
+					return;
+				}
+				if (osu_api::v1::api::GetUserPassRecent(userid, 100, gamemode, si) == 0) {
+					switch (gamemode) {
+					case  osu_api::v1::mode::std:
+						cqhttp_api::send_message(tar, u8"你最近在模式Standard上没有Pass的游玩记录~");
+						return;
+					case  osu_api::v1::mode::taiko:
+						cqhttp_api::send_message(tar, u8"你最近在模式Taiko上没有Pass的游玩记录~");
+						return;
+					case  osu_api::v1::mode::ctb:
+						cqhttp_api::send_message(tar, u8"你最近在模式Catch the Beat上没有Pass的游玩记录~");
+						return;
+					case  osu_api::v1::mode::mania:
+						cqhttp_api::send_message(tar, u8"你最近在模式Mania上没有Pass的游玩记录~");
+						return;
+					}
+				}
+			}
+			else {
+				if (username.length() > 20) {
+					cqhttp_api::send_message(tar, 所提供的参数超出长度限制);
+					return;
+				}
+				utils::string_trim(username);
+				if (osu_api::v1::api::GetUser(username, gamemode, &ui) == 0) {
+					cqhttp_api::send_message(tar, u8"没这个人或者TA根本不玩这个模式！");
+					return;
+				}
+				if (osu_api::v1::api::GetUserPassRecent(username, 100, gamemode, si) == 0) {
+					switch (gamemode) {
+					case  osu_api::v1::mode::std:
+						cqhttp_api::send_message(tar, u8"TA最近在模式Standard上没有Pass的游玩记录~");
+						return;
+					case  osu_api::v1::mode::taiko:
+						cqhttp_api::send_message(tar, u8"TA最近在模式Taiko上没有Pass的游玩记录~");
+						return;
+					case  osu_api::v1::mode::ctb:
+						cqhttp_api::send_message(tar, u8"TA最近在模式Catch the Beat上没有Pass的游玩记录~");
+						return;
+					case  osu_api::v1::mode::mania:
+						cqhttp_api::send_message(tar, u8"TA最近在模式Mania上没有Pass的游玩记录~");
+						return;
+					}
+				}
+			}
+			ScorePanelData sp_data;
+			sp_data.user_info = ui;
+			sp_data.score_info = si[0];
+			sp_data.mode = gamemode;
+			osu_api::v1::api::GetBeatmap(sp_data.score_info.beatmap_id, &sp_data.beatmap_info);
+			sprintf_s(beatmap_url, OSU_FILE_URL "%lld", sp_data.score_info.beatmap_id);
+			beatmap = NetConnection::HttpsGet(beatmap_url);
+			if (beatmap.empty()) {
+				cqhttp_api::send_message(tar, 获取谱面信息错误);
+				return;
+			}
+			if (sp_data.mode == osu_api::v1::mode::std) {
+				oppai pp;
+				pp.read_data(beatmap);
+				pp.mods((int)sp_data.score_info.mods);
+				// if fc
+				pp.accuracy_percent(-1);
+				pp.n300((int)sp_data.score_info.n300);
+				pp.n100((int)sp_data.score_info.n100);
+				pp.n50((int)sp_data.score_info.n50);
+				oppai_result t = pp.calc();
+				sp_data.fc = (int)t.data.total_pp.value();
+				// original
+				pp.end((int)sp_data.score_info.n300 + (int)sp_data.score_info.n100 + (int)sp_data.score_info.n50
+					+ (int)sp_data.score_info.nmiss);
+				pp.nmiss((int)sp_data.score_info.nmiss);
+				pp.combo((int)sp_data.score_info.combo);
+				sp_data.pp_info = pp.calc();
+				sp_data.pp_info.data.total_star = t.data.total_star;
+				// reset
+				pp.end(-1);
+				pp.n300(-1);
+				pp.n100(-1);
+				pp.n50(-1);
+				pp.nmiss(-1);
+				pp.combo(-1);
+				for (int i = 0; i < 5; ++i) {
+					pp.accuracy_percent((float)(i == 0 ? 95 : 96 + i));
+					sp_data.confirmed_acc[i] = (int)(pp.calc().data.total_pp.value());
+				}
+				if (sp_data.pp_info.code == 0) {
+					sp_data.pp_info.data.maxcombo = t.data.maxcombo;
+					sp_data.pp_info.data.maxlength = t.data.length;
+				}
+			}
+			else {
+				if (sp_data.mode == osu_api::v1::mode::mania) {
+					long n1, n2;
+					n1 = sp_data.score_info.n50 * 50.0 + sp_data.score_info.n100 * 100.0
+						+ sp_data.score_info.nkatu * 200.0
+						+ (sp_data.score_info.n300 + sp_data.score_info.ngeki) * 300.0;
+					n2 = 300
+						* (sp_data.score_info.nmiss + sp_data.score_info.n50 + sp_data.score_info.nkatu
+							+ sp_data.score_info.n100 + sp_data.score_info.n300 + sp_data.score_info.ngeki);
+					sp_data.pp_info.data.accuracy = (double)n1 / (double)n2 * 100.0;
+				}
+				if (sp_data.mode == osu_api::v1::mode::taiko) {
+					double n1, n2;
+					n1 = ((double)sp_data.score_info.n100 + (double)sp_data.score_info.nkatu) * 0.5
+						+ (double)sp_data.score_info.n300 + (double)sp_data.score_info.ngeki;
+					n2 = (double)sp_data.score_info.nmiss + (double)sp_data.score_info.n100
+						+ (double)sp_data.score_info.nkatu + (double)sp_data.score_info.n300
+						+ (double)sp_data.score_info.ngeki;
+					sp_data.pp_info.data.accuracy = (double)n1 / (double)n2 * 100.0;
+				}
+				if (sp_data.mode == osu_api::v1::mode::ctb) {
+					long n1, n2;
+					n1 = sp_data.score_info.n50 + sp_data.score_info.n100 + sp_data.score_info.n300;
+					n2 = sp_data.score_info.nkatu + sp_data.score_info.nmiss + sp_data.score_info.n50
+						+ sp_data.score_info.n100 + sp_data.score_info.n300;
+					sp_data.pp_info.data.maxcombo = sp_data.beatmap_info.maxcombo;
+					sp_data.pp_info.data.accuracy = (double)n1 / (double)n2 * 100.0;
+				}
+				sp_data.pp_info.data.title = sp_data.beatmap_info.title;
+				sp_data.pp_info.data.artist = sp_data.beatmap_info.artist;
+				sp_data.pp_info.data.creator = sp_data.beatmap_info.creator;
+				sp_data.pp_info.data.total_star = sp_data.beatmap_info.stars;
+				sp_data.pp_info.data.bpm = sp_data.beatmap_info.bpm;
+				sp_data.pp_info.data.ar = sp_data.beatmap_info.ar;
+				sp_data.pp_info.data.od = sp_data.beatmap_info.od;
+				sp_data.pp_info.data.cs = sp_data.beatmap_info.cs;
+				sp_data.pp_info.data.hp = sp_data.beatmap_info.hp;
+				sp_data.pp_info.data.combo = sp_data.score_info.combo;
+			}
+			string fileStr = "osucat\\" + scorePic(sp_data);
+			cqhttp_api::send_message(tar, u8"[CQ:image,file=" + fileStr + u8"]");
+			db.osu_UpdatePPRecord(tar.user_id, sp_data.score_info.beatmap_id);
+			utils::_DelayDelTmpFile(to_string(OC_ROOT_PATH) + "\\data\\images\\" + fileStr);
+		}
+
 		static void bp(const Target tar) {
 			string cmd = tar.message.substr(2);
 			Database db;
@@ -714,7 +981,7 @@ namespace osucat {
 			utils::string_replace(cmd, "[CQ:", "");
 			ScorePanelData sp_data = { 0 };
 			vector<osu_api::v1::score_info> SI;
-			int temp;
+			int temp = 0;
 			osu_api::v1::mode gamemode;
 			gamemode = osu_api::v1::mode::std;
 			string username = "";
@@ -1155,35 +1422,72 @@ namespace osucat {
 			Database db;
 			db.Connect();
 			db.addcallcount();
-			int64_t uid = db.osu_getuserid(tar.user_id);
-			if (uid == 0) {
-				cqhttp_api::send_message(tar, 用户没有绑定osu账号);
-				return;
+			string cmd = tar.message.substr(6);
+			utils::string_trim(cmd);
+			osu_api::v1::user_info UI = { 0 };
+			if (cmd.length() > 0) {
+				if (osu_api::v1::api::GetUser(cmd, osu_api::v1::mode::std, &UI) == 0) {
+					send_message(tar, 未从bancho检索到要查询的用户信息);;
+					return;
+				}
+				send_message(tar, u8"少女祈祷中...");
+				DeleteFileA(("./work/avatar/" + to_string(UI.user_id) + ".png").c_str());
+				vector<long> pp_plus;
+				try {
+					pp_plus = NetConnection::getUserPlusData(UI.user_id);
+					osu_api::v1::pplus_info pi;
+					pi.acc = pp_plus[0];
+					pi.flow = pp_plus[1];
+					pi.jump = pp_plus[2];
+					pi.pre = pp_plus[3];
+					pi.spd = pp_plus[4];
+					pi.sta = pp_plus[5];
+					db.osu_UpdatePPlus(UI.user_id, UI.pp, pi);
+				}
+				catch (std::exception) {
+				}
+				catch (osucat::NetConnection) {
+					send_message(tar, u8"更新pp+失败...");
+				}
+				Target t = tar;
+				t.message = "info " + UI.username;
+				info(t);
 			}
-			osu_api::v1::user_info UI;
-			osu_api::v1::mode mode = (osu_api::v1::mode)db.osu_GetUserDefaultGameMode(uid);
-			int8_t returnCode = osu_api::v1::api::GetUser(uid, mode, &UI);
-			if (returnCode == 0) {
-				cqhttp_api::send_message(tar, 被查询的用户已被bancho封禁);
-				return;
+			else {
+				int64_t uid = db.osu_getuserid(tar.user_id);
+				if (uid == 0) {
+					cqhttp_api::send_message(tar, 用户没有绑定osu账号);
+					return;
+				}
+				osu_api::v1::mode mode = (osu_api::v1::mode)db.osu_GetUserDefaultGameMode(uid);
+				int8_t returnCode = osu_api::v1::api::GetUser(uid, mode, &UI);
+				if (returnCode == 0) {
+					cqhttp_api::send_message(tar, 被查询的用户已被bancho封禁);
+					return;
+				}
+				cqhttp_api::send_message(tar, u8"少女祈祷中...");
+				DeleteFileA(("./work/avatar/" + to_string(UI.user_id) + ".png").c_str());
+				vector<long> pp_plus;
+				try {
+					pp_plus = NetConnection::getUserPlusData(UI.user_id);
+					osu_api::v1::pplus_info pi;
+					pi.acc = pp_plus[0];
+					pi.flow = pp_plus[1];
+					pi.jump = pp_plus[2];
+					pi.pre = pp_plus[3];
+					pi.spd = pp_plus[4];
+					pi.sta = pp_plus[5];
+					db.osu_UpdatePPlus(UI.user_id, UI.pp, pi);
+				}
+				catch (std::exception) {
+				}
+				catch (osucat::NetConnection) {
+					send_message(tar, u8"更新pp+失败...");
+				}
+				Target t = tar;
+				t.message = "info " + UI.username;
+				info(t);
 			}
-			cqhttp_api::send_message(tar, u8"少女祈祷中...");
-			DeleteFileA(("./work/avatar/" + to_string(UI.user_id) + ".png").c_str());
-			vector<long> pp_plus;
-			try {
-				pp_plus = NetConnection::getUserPlusData(UI.user_id);
-				osu_api::v1::pplus_info pi;
-				pi.acc = pp_plus[0];
-				pi.flow = pp_plus[1];
-				pi.jump = pp_plus[2];
-				pi.pre = pp_plus[3];
-				pi.spd = pp_plus[4];
-				pi.sta = pp_plus[5];
-				db.osu_UpdatePPlus(UI.user_id, UI.pp, pi);
-			}
-			catch (std::exception) {
-			}
-			info(tar);
 		}
 
 		static void pp(const Target tar) {
@@ -1898,7 +2202,7 @@ namespace osucat {
 					return;
 				}
 				if (osu_api::v1::api::GetUserBest(userid, 100, gamemode, SI) == 0) {
-					cqhttp_api::send_message(tar, u8"多打一打这个模式再来使用此命令喔~\n?*??(ˊ?ˋ*)??*?");
+					cqhttp_api::send_message(tar, u8"多打一打这个模式再来使用此命令喔~");
 					return;
 				}
 			}
@@ -1908,12 +2212,12 @@ namespace osucat {
 					return;
 				}
 				if (osu_api::v1::api::GetUserBest(username, 100, gamemode, SI) == 0) {
-					cqhttp_api::send_message(tar, u8"多打一打这个模式再来使用此命令喔~\n?*??(ˊ?ˋ*)??*?");
+					cqhttp_api::send_message(tar, u8"多打一打这个模式再来使用此命令喔~");
 					return;
 				}
 			}
 			if (SI.size() < 100) {
-				cqhttp_api::send_message(tar, u8"多打一打这个模式再来使用此命令喔~\n?*??(ˊ?ˋ*)??*?");
+				cqhttp_api::send_message(tar, u8"多打一打这个模式再来使用此命令喔~");
 				return;
 			}
 			UI.mode = gamemode;
@@ -1942,13 +2246,13 @@ namespace osucat {
 			}
 			sprintf_s(message,
 				1024,
-				u8"%s - 模式 %s\n"
-				u8"你的bp1有 %.2f pp，\n"
-				u8"你的bp2有 %.2f pp，\n...\n"
-				u8"你的bp99有 %.2f pp，\n"
-				u8"你的bp100有 %.2f pp，\n"
+				u8"%s [%s]\n"
+				u8"你的bp#1有 %.2f pp，\n"
+				u8"你的bp#2有 %.2f pp，\n...\n"
+				u8"你的bp#99有 %.2f pp，\n"
+				u8"你的bp#100有 %.2f pp，\n"
 				u8"你bp1与bp100相差了有 %.2f pp，\n"
-				u8"你的bp榜上所有成绩的平均值是 %.2f pp。",
+				u8"你的bp榜上所有成绩的平均值为 %.2f pp。",
 				UI.username.c_str(),
 				modestr.c_str(),
 				SI[0].pp,
@@ -1957,7 +2261,9 @@ namespace osucat {
 				SI[99].pp,
 				SI[0].pp - SI[99].pp,
 				totalvalue / 100);
-			cqhttp_api::send_message(tar, message);
+			string file = bpht_img(message);
+			cqhttp_api::send_message(tar, u8"[CQ:image,file=" + file + u8"]");
+			utils::_DelayDelTmpFile(to_string(OC_ROOT_PATH) + "\\data\\images\\" + file);
 		}
 
 		static void ppvs(const Target tar) {
@@ -2010,6 +2316,10 @@ namespace osucat {
 			else {
 				UI2.user_info.updatepplus = true;
 			}*/
+			UI1.user_info.updatepplus = false;
+			db.osu_GetUserPreviousPPlus(UI1.user_info.user_id, &UI1.pplus_info);
+			UI2.user_info.updatepplus = false;
+			db.osu_GetUserPreviousPPlus(UI2.user_info.user_id, &UI2.pplus_info);
 			string fileStr = "osucat\\" + ppvsimg(UI1, UI2);
 			cqhttp_api::send_message(tar, u8"[CQ:image,file=" + fileStr + u8"]");
 			utils::_DelayDelTmpFile(to_string(OC_ROOT_PATH) + "\\data\\images\\" + fileStr);
@@ -2941,20 +3251,20 @@ namespace osucat {
 				bi.description = tmp[3];
 				Database db;
 				db.Connect();
-				int* id;
-				if (db.osu_setNewBadge(bi, id)) {
+				int id = { 0 };
+				if (db.osu_setNewBadge(bi, &id)) {
 					string picPath;
 					picPath = utils::GetMiddleText(cmd, "[CQ:image,file=", ",url");
 					picPath = picPath.substr(picPath.find(',') + 6);
 					PictureInfo p = getImage(picPath);
 					picPath = ".\\data\\cache\\" + picPath + "." + p.format;
-					if (!utils::copyFile(picPath, ".\\work\\badges\\" + to_string(*id) + ".png")) {
-						DeleteFileA((".\\work\\badges\\" + to_string(*id) + ".png").c_str());
+					if (!utils::copyFile(picPath, ".\\work\\badges\\" + to_string(id) + ".png")) {
+						DeleteFileA((".\\work\\badges\\" + to_string(id) + ".png").c_str());
 						send_message(tar, u8"移动文件失败");
 						return;
 					}
-					if (!utils::copyFile(picPath, ".\\data\\images\\osucat\\badges\\" + to_string(*id) + ".png")) {
-						DeleteFileA((".\\data\\images\\osucat\\badges\\" + to_string(*id) + ".png").c_str());
+					if (!utils::copyFile(picPath, ".\\data\\images\\osucat\\badges\\" + to_string(id) + ".png")) {
+						DeleteFileA((".\\data\\images\\osucat\\badges\\" + to_string(id) + ".png").c_str());
 						send_message(tar, u8"移动文件失败");
 						return;
 					}
@@ -3565,6 +3875,11 @@ namespace osucat {
 					Database db;
 					db.Connect();
 					if (db.is_Blocked(tar.user_id) == 1) return; //在黑名单内的用户被忽略
+					if (_stricmp(tar.message.substr(0, 11).c_str(), "reloadadmin") == 0) {
+						if (tar.user_id != owner_userid) { return; }
+						try { db.reloadAdmin(); send_message(tar, u8"管理员列表已更新。"); }
+						catch (osucat::database_exception) { send_message(tar, u8"更新失败."); }
+					}
 					if (_stricmp(tar.message.substr(0, 18).c_str(), u8"猫猫调用次数") == 0) {
 						Main::outputcallcount(tar); return;
 					}
@@ -3572,9 +3887,17 @@ namespace osucat {
 						if (tar.type == Target::Type::GROUP) { if (db.isGroupEnable(tar.group_id, 3) == 0) return; }
 						Main::recent(tar); return;
 					}
-					if (_stricmp(tar.message.substr(0, 2).c_str(), "pr") == 0) {
+					if (_stricmp(tar.message.substr(0, 5).c_str(), "rctpp") == 0) {
+						if (tar.type == Target::Type::GROUP) { if (db.isGroupEnable(tar.group_id, 2) == 0) return; }
+						Main::rctpp(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 3).c_str(), "rct") == 0 || _stricmp(tar.message.substr(0, 2).c_str(), "re") == 0) {
 						if (tar.type == Target::Type::GROUP) { if (db.isGroupEnable(tar.group_id, 3) == 0) return; }
 						Main::recent(tar); return;
+					}
+					if (_stricmp(tar.message.substr(0, 2).c_str(), "pr") == 0) {
+						if (tar.type == Target::Type::GROUP) { if (db.isGroupEnable(tar.group_id, 3) == 0) return; }
+						Main::pass_recent(tar); return;
 					}
 					if (_stricmp(tar.message.substr(0, 4).c_str(), "help") == 0) {
 						Main::help(tar); return;
@@ -3625,10 +3948,6 @@ namespace osucat {
 					}
 					if (_stricmp(tar.message.substr(0, 7).c_str(), "setmode") == 0) {
 						Main::setmode(tar); return;
-					}
-					if (_stricmp(tar.message.substr(0, 5).c_str(), "rctpp") == 0) {
-						if (tar.type == Target::Type::GROUP) { if (db.isGroupEnable(tar.group_id, 2) == 0) return; }
-						Main::rctpp(tar); return;
 					}
 					if (_stricmp(tar.message.substr(0, 4).c_str(), "ppvs") == 0) {
 						Main::ppvs(tar); return;
@@ -3717,11 +4036,6 @@ namespace osucat {
 								Admin::setnewbadge(tar); return;
 							}
 						}
-					}
-					if (_stricmp(tar.message.substr(0, 11).c_str(), "reloadadmin") == 0) {
-						if (tar.user_id != owner_userid) { return; }
-						try { db.reloadAdmin(); send_message(tar, u8"管理员列表已更新。"); }
-						catch (osucat::database_exception) { send_message(tar, u8"更新失败."); }
 					}
 					steamcat::cmdParser::parse(tar, sdr); //steamcat
 					if (tar.type == Target::Type::GROUP) if (db.isGroupEnable(tar.group_id, 4) == 0) return; //拦截娱乐模块

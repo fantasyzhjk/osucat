@@ -1,6 +1,7 @@
 ﻿#pragma once
 char OC_ROOT_PATH[512];
-bool OC_DEBUG_MODE = false;
+bool OC_DEBUG_MODE = false; //开启后会输出原始内容
+bool GLOBAL_TEST_MODE = false; //开启后仅作数据处理，不会实际发送
 long long int owner_userid;
 long long int management_groupid;
 char OC_SERVER_HOST[32];
