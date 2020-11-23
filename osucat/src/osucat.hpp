@@ -78,7 +78,7 @@ namespace osucat {
 		}
 
 		static void setid(const Target tar) {
-			string cmd = utils::unescape(tar.message.substr(5));
+			string cmd = utils::cqunescape(tar.message.substr(5));
 			utils::string_trim(cmd);
 			if (cmd.length() > 20) {
 				send_message(tar, 所提供的参数超出长度限制);
@@ -187,7 +187,7 @@ namespace osucat {
 				cmd = tar.message.substr(6);
 			}
 			else return;
-			utils::unescape(cmd);
+			cmd = utils::cqunescape(cmd);
 			utils::string_trim(cmd);
 			utils::string_replace(cmd, u8"：", ":");
 			utils::string_replace(cmd, "[CQ:", "");
@@ -449,7 +449,7 @@ namespace osucat {
 			Database db;
 			db.Connect();
 			db.addcallcount();
-			cmd = utils::unescape(cmd);
+			cmd = utils::cqunescape(cmd);
 			utils::string_trim(cmd);
 			utils::string_replace(cmd, u8"：", ":");
 			utils::string_replace(cmd, "[CQ:", "");
@@ -710,7 +710,7 @@ namespace osucat {
 			Database db;
 			db.Connect();
 			db.addcallcount();
-			cmd = utils::unescape(cmd);
+			cmd = utils::cqunescape(cmd);
 			utils::string_trim(cmd);
 			utils::string_replace(cmd, u8"：", ":");
 			utils::string_replace(cmd, "[CQ:", "");
@@ -975,7 +975,7 @@ namespace osucat {
 			Database db;
 			db.Connect();
 			db.addcallcount();
-			cmd = utils::unescape(cmd);
+			cmd = utils::cqunescape(cmd);
 			utils::string_trim(cmd);
 			utils::string_replace(cmd, u8"：", ":");
 			utils::string_replace(cmd, "[CQ:", "");
@@ -1423,6 +1423,7 @@ namespace osucat {
 			db.Connect();
 			db.addcallcount();
 			string cmd = tar.message.substr(6);
+			cmd = utils::cqunescape(cmd);
 			utils::string_trim(cmd);
 			osu_api::v1::user_info UI = { 0 };
 			if (cmd.length() > 0) {
@@ -1653,7 +1654,7 @@ namespace osucat {
 			Database db;
 			db.Connect();
 			db.addcallcount();
-			string cmd = utils::unescape(tar.message.substr(5));
+			string cmd = utils::cqunescape(tar.message.substr(5));
 			utils::string_trim(cmd);
 			utils::string_replace(cmd, u8"：", ":");
 			utils::string_replace(cmd, "[CQ:", "");
@@ -2090,7 +2091,7 @@ namespace osucat {
 		static void bphead_tail(const Target tar) {
 			string cmd = tar.message.substr(4);
 			utils::string_trim(cmd);
-			cmd = utils::unescape(cmd);
+			cmd = utils::cqunescape(cmd);
 			utils::string_replace(cmd, u8"：", ":");
 			utils::string_replace(cmd, "[CQ:", "");
 			int temp;
@@ -2262,14 +2263,14 @@ namespace osucat {
 				SI[0].pp - SI[99].pp,
 				totalvalue / 100);
 			string file = bpht_img(message);
-			cqhttp_api::send_message(tar, u8"[CQ:image,file=" + file + u8"]");
+			send_message(tar, u8"[CQ:image,file=" + file + u8"]");
 			utils::_DelayDelTmpFile(to_string(OC_ROOT_PATH) + "\\data\\images\\" + file);
 		}
 
 		static void ppvs(const Target tar) {
 			string cmd = tar.message.substr(4);
 			utils::string_trim(cmd);
-			cmd = utils::unescape(cmd);
+			cmd = utils::cqunescape(cmd);
 			if (cmd.length() < 1) {
 				cqhttp_api::send_message(tar, u8"请提供要对比的玩家ID");
 				return;
@@ -2350,7 +2351,7 @@ namespace osucat {
 		}
 
 		static void occost(const Target tar) {
-			string cmd = utils::unescape(tar.message.substr(6));
+			string cmd = utils::cqunescape(tar.message.substr(6));
 			utils::string_trim(cmd);
 			utils::string_replace(cmd, u8"：", ":");
 			utils::string_replace(cmd, "[CQ:", "");
@@ -2426,7 +2427,7 @@ namespace osucat {
 		}
 
 		static void searchuid(const Target tar) {
-			string cmd = utils::unescape(tar.message.substr(9));
+			string cmd = utils::cqunescape(tar.message.substr(9));
 			utils::string_trim(cmd);
 			utils::string_replace(cmd, u8"：", ":");
 			utils::string_replace(cmd, "[CQ:", "");
@@ -2480,7 +2481,7 @@ namespace osucat {
 			Database db;
 			db.Connect();
 			db.addcallcount();
-			string cmd = utils::unescape(tar.message.substr(7));
+			string cmd = utils::cqunescape(tar.message.substr(7));
 			utils::string_trim(cmd);
 			utils::string_replace(cmd, u8"：", ":");
 			utils::string_replace(cmd, "[CQ:", "");
@@ -2856,7 +2857,7 @@ namespace osucat {
 				cqhttp_api::send_message(tar, u8"此操作需要管理员执行。");
 				return;
 			}
-			cmd = utils::unescape(cmd);
+			cmd = utils::cqunescape(cmd);
 			utils::string_trim(cmd);
 			utils::string_replace(cmd, u8"：", ":");
 			Database db;

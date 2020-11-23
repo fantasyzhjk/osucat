@@ -3779,24 +3779,6 @@ namespace cqhttp_api::utils {
 		time_t t_ = mktime(&tm_); //已经减了8个时区
 		*ttm = tm_; //秒时间
 	}
-	static inline std::string escape(const std::string& str, const bool escape_comma = true) {
-
-		std::string res = str;
-		string_replace(res, "&", "&amp;");
-		string_replace(res, "[", "&#91;");
-		string_replace(res, "]", "&#93;");
-		if (escape_comma) string_replace(res, ",", "&#44;");
-		return res;
-	}
-	// 对字符串做 CQ 码去转义
-	static inline std::string unescape(const std::string& str) {
-		std::string res = str;
-		string_replace(res, "&#44;", ",");
-		string_replace(res, "&#91;", "[");
-		string_replace(res, "&#93;", "]");
-		string_replace(res, "&amp;", "&");
-		return res;
-	}
 	// --fixed
 	static std::string GetMiddleText(std::string regularStr, std::string frontStr, std::string behindStr) {
 		std::string str;
@@ -3830,6 +3812,22 @@ namespace cqhttp_api::utils {
 		std::string res = str;
 		string_replace(res, "[OC:character,id=1]", "\"");
 		string_replace(res, "[OC:character,id=2]", "'");
+		return res;
+	}
+	static inline std::string cqescape(const std::string& str) {
+		std::string res = str;
+		string_replace(res, ",", "&#44;");
+		string_replace(res, "&", "&amp;");
+		string_replace(res, "[", "&#91;");
+		string_replace(res, "]", "&#93;");
+		return res;
+	}
+	static inline std::string cqunescape(const std::string& str) {
+		std::string res = str;
+		string_replace(res, "&#44;", ",");
+		string_replace(res, "&amp;", "&");
+		string_replace(res, "&#91;", "[");
+		string_replace(res, "&#93;", "]");
 		return res;
 	}
 	static void DelFileHandler(std::string filename, int delayTime = 0) {

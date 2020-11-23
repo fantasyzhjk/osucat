@@ -136,7 +136,7 @@ namespace osucat {
 			cover.resize(Geometry(100000, 350));
 			cover.crop(Geometry(1200, 350));
 			dl.clear();
-			dl.push_back(DrawableFillColor("white"));
+			dl.push_back(DrawableFillColor("#ffffff"));
 			dl.push_back(DrawableRoundRectangle(0, 0, 1200, 350, 20, 20));
 			coverRoundrect.draw(dl);
 			coverRoundrect.composite(cover, 0, 0, InCompositeOp);
@@ -169,7 +169,7 @@ namespace osucat {
 		try {
 			Image avttemp(Geometry(190, 190), Color("none"));
 			dl.clear();
-			dl.push_back(DrawableFillColor("white"));
+			dl.push_back(DrawableFillColor("#ffffff"));
 			dl.push_back(DrawableRoundRectangle(0, 0, 190, 190, 40, 40));
 			avttemp.draw(dl);
 			Image ava("./work/avatar/" + to_string(data.user_info.user_id) + ".png");
@@ -183,7 +183,7 @@ namespace osucat {
 			avatardef.resize(Geometry(190, 190));
 			Image avttemp(Geometry(190, 190), Color("none"));
 			dl.clear();
-			dl.push_back(DrawableFillColor("white"));
+			dl.push_back(DrawableFillColor("#ffffff"));
 			dl.push_back(DrawableRoundRectangle(0, 0, 190, 190, 40, 40));
 			avttemp.draw(dl);
 			avttemp.composite(avatardef, 0, 0, InCompositeOp);
@@ -201,7 +201,7 @@ namespace osucat {
 		dl.clear();
 		dl.push_back(DrawableGravity(GravityType::UndefinedGravity));
 		dl.push_back(DrawableFont("./work/fonts/Exo2-SemiBold.otf"));
-		dl.push_back(DrawableFillColor("white"));
+		dl.push_back(DrawableFillColor("#ffffff"));
 		dl.push_back(DrawablePointSize(60));
 		dl.push_back(DrawableText(268, 120, data.user_info.username));
 		dl.push_back(DrawablePointSize(20));
@@ -424,7 +424,7 @@ namespace osucat {
 		dl.push_back(DrawableFont("./work/fonts/Exo2-Regular.otf"));
 		dl.push_back(DrawableGravity(GravityType::UndefinedGravity));
 		dl.push_back(DrawablePointSize(20));
-		dl.push_back(DrawableFillColor("white"));
+		dl.push_back(DrawableFillColor("#ffffff"));
 		time_t nowtime;
 		nowtime = time(NULL);
 		struct tm local = { 0 };
@@ -505,7 +505,7 @@ namespace osucat {
 		try {
 			Image avttemp(Geometry(410, 410), Color("none"));
 			dl.clear();
-			dl.push_back(DrawableFillColor("white"));
+			dl.push_back(DrawableFillColor("#ffffff"));
 			dl.push_back(DrawableRoundRectangle(0, 0, 410, 410, 60, 60));
 			avttemp.draw(dl);
 			Image ava("./work/avatar/" + to_string(data.user_info.user_id) + ".png");
@@ -519,7 +519,7 @@ namespace osucat {
 			avatardef.resize(Geometry(415, 415));
 			Image avttemp(Geometry(410, 410), Color("none"));
 			dl.clear();
-			dl.push_back(DrawableFillColor("white"));
+			dl.push_back(DrawableFillColor("#ffffff"));
 			dl.push_back(DrawableRoundRectangle(0, 0, 430, 430, 60, 60));
 			avttemp.draw(dl);
 			avttemp.composite(avatardef, 0, 0, InCompositeOp);
@@ -531,7 +531,7 @@ namespace osucat {
 		dl.push_back(DrawableFont("./work/fonts/Torus Regular.otf"));
 		sprintf_s(temp, "%d", (int)data.user_info.level);
 		dl.push_back(DrawablePointSize(42));
-		dl.push_back(DrawableFillColor("white"));
+		dl.push_back(DrawableFillColor("#ffffff"));
 		dl.push_back(DrawableText(-604, -652, temp));
 		Info.draw(dl);
 		dl.clear();
@@ -540,7 +540,7 @@ namespace osucat {
 		sprintf_s(temp, "%d%%", (int)(stof(temp) * 100));
 		dl.push_back(DrawableFont("./work/fonts/Torus Regular.otf"));
 		dl.push_back(DrawablePointSize(20));
-		dl.push_back(DrawableFillColor("white"));
+		dl.push_back(DrawableFillColor("#ffffff"));
 		dl.push_back(DrawableText(1170, 289, temp));
 		Info.draw(dl);
 		dl.clear();
@@ -559,7 +559,7 @@ namespace osucat {
 		// username
 		dl.push_back(DrawableGravity(GravityType::UndefinedGravity));
 		dl.push_back(DrawableFont("./work/fonts/Torus Regular.otf"));
-		dl.push_back(DrawableFillColor("white"));
+		dl.push_back(DrawableFillColor("#ffffff"));
 		dl.push_back(DrawablePointSize(60));
 		dl.push_back(DrawableText(666, 208, data.user_info.username));
 		Info.draw(dl);
@@ -567,7 +567,7 @@ namespace osucat {
 		// ranks
 		dl.push_back(DrawableGravity(GravityType::CenterGravity));
 		dl.push_back(DrawableFont("./work/fonts/Torus Regular.otf"));
-		dl.push_back(DrawableFillColor("white"));
+		dl.push_back(DrawableFillColor("#ffffff"));
 		dl.push_back(DrawablePointSize(60));
 		dl.push_back(DrawableText(-1016, -70, to_string(data.user_info.count_ssh)));
 		dl.push_back(DrawableText(-765, -70, to_string(data.user_info.count_ss)));
@@ -723,7 +723,7 @@ namespace osucat {
 					Image roundrect(Geometry(433, 296), Color("none"));
 					// beatmap info shadow
 					dl.clear();
-					dl.push_back(DrawableFillColor("white"));
+					dl.push_back(DrawableFillColor("#ffffff"));
 					dl.push_back(DrawableRoundRectangle(0, 0, 433.0, 296.0, 20.0, 20.0));
 					roundrect.draw(dl);
 					//修改图片大小以适配左上角小图
@@ -766,7 +766,7 @@ namespace osucat {
 
 			// score
 			score.font("./work/fonts/Torus Regular.otf");
-			score.fillColor("white");
+			score.fillColor("#ffffff");
 			dl.clear(); //清空队列
 			score.fontPointsize(40);
 			dl.push_back(DrawableTextAlignment(AlignType::CenterAlign));
@@ -784,9 +784,9 @@ namespace osucat {
 					break;
 				}
 			}
-			dl.push_back(DrawableFillColor("black"));
+			dl.push_back(DrawableFillColor("#000000"));
 			dl.push_back(DrawableText(499, 105, temp));
-			dl.push_back(DrawableFillColor("white"));
+			dl.push_back(DrawableFillColor("#ffffff"));
 			dl.push_back(DrawableText(499, 100, temp));
 			score.draw(dl);
 			// beatmap_info
@@ -801,9 +801,9 @@ namespace osucat {
 					break;
 				}
 			}
-			dl.push_back(DrawableFillColor("black"));
+			dl.push_back(DrawableFillColor("#000000"));
 			dl.push_back(DrawableText(519, 168, temp));
-			dl.push_back(DrawableFillColor("white"));
+			dl.push_back(DrawableFillColor("#ffffff"));
 			dl.push_back(DrawableText(519, 165, temp));
 			temp.clear();
 			for (auto c : data.pp_info.data.creator) {
@@ -814,10 +814,10 @@ namespace osucat {
 					break;
 				}
 			}
-			dl.push_back(DrawableFillColor("black"));
+			dl.push_back(DrawableFillColor("#000000"));
 			dl.push_back(DrawableText(795, 168, temp));
 			dl.push_back(DrawableText(1008, 168, to_string(data.score_info.beatmap_id)));
-			dl.push_back(DrawableFillColor("white"));
+			dl.push_back(DrawableFillColor("#ffffff"));
 			dl.push_back(DrawableText(795, 165, temp));
 			dl.push_back(DrawableText(1008, 165, to_string(data.score_info.beatmap_id)));
 			score.draw(dl);
@@ -838,12 +838,12 @@ namespace osucat {
 				dl.clear();
 				score.fontPointsize(53.09);
 				dl.push_back(DrawableTextAlignment(AlignType::CenterAlign));
-				dl.push_back(DrawableFillColor("black"));
+				dl.push_back(DrawableFillColor("#000000"));
 				dl.push_back(DrawableText(793, 850, to_string(data.score_info.n300)));
 				dl.push_back(DrawableText(793, 978, to_string(data.score_info.n100)));
 				dl.push_back(DrawableText(1154, 850, to_string(data.score_info.n50)));
 				dl.push_back(DrawableText(1154, 978, to_string(data.score_info.nmiss)));
-				dl.push_back(DrawableFillColor("white"));
+				dl.push_back(DrawableFillColor("#ffffff"));
 				dl.push_back(DrawableText(793, 847, to_string(data.score_info.n300)));
 				dl.push_back(DrawableText(793, 975, to_string(data.score_info.n100)));
 				dl.push_back(DrawableText(1154, 847, to_string(data.score_info.n50)));
@@ -854,14 +854,14 @@ namespace osucat {
 				dl.clear();
 				score.fontPointsize(53.09);
 				dl.push_back(DrawableTextAlignment(AlignType::CenterAlign));
-				dl.push_back(DrawableFillColor("black"));
+				dl.push_back(DrawableFillColor("#000000"));
 				dl.push_back(DrawableText(
 					793, 850, to_string(data.score_info.n300) + "/" + to_string(data.score_info.ngeki)));
 				dl.push_back(DrawableText(
 					793, 978, to_string(data.score_info.n100) + "/" + to_string(data.score_info.nkatu)));
 				dl.push_back(DrawableText(1154, 850, to_string(data.score_info.n50)));
 				dl.push_back(DrawableText(1154, 978, to_string(data.score_info.nmiss)));
-				dl.push_back(DrawableFillColor("white"));
+				dl.push_back(DrawableFillColor("#ffffff"));
 				dl.push_back(DrawableText(
 					793, 847, to_string(data.score_info.n300) + "/" + to_string(data.score_info.ngeki)));
 				dl.push_back(DrawableText(
@@ -878,7 +878,7 @@ namespace osucat {
 			int maxsecond = data.pp_info.data.maxlength / 1000 % 60;
 			int maxminute = data.pp_info.data.maxlength / 1000 / 60;
 			char l[20];
-			dl.push_back(DrawableFillColor("black"));
+			dl.push_back(DrawableFillColor("#000000"));
 			sprintf_s(l, "%.2f", data.pp_info.data.bpm);
 			dl.push_back(DrawableText(1457, 124, l));
 			sprintf_s(l, "%.1f", data.pp_info.data.ar);
@@ -910,7 +910,7 @@ namespace osucat {
 			// stars, version
 			dl.clear();
 			score.fontPointsize(26.37);
-			dl.push_back(DrawableFillColor("black"));
+			dl.push_back(DrawableFillColor("#000000"));
 			sprintf_s(l, "Stars: %.2f", data.pp_info.data.total_star);
 			temp.clear();
 			for (auto c : data.beatmap_info.version) {
@@ -925,7 +925,7 @@ namespace osucat {
 			dl.push_back(DrawableText(584, 286, l));
 			dl.push_back(DrawableFillColor("#f1ce59"));
 			dl.push_back(DrawableText(584, 283, l));
-			dl.push_back(DrawableFillColor("white"));
+			dl.push_back(DrawableFillColor("#ffffff"));
 			dl.push_back(DrawableText(584, 311, temp));
 			score.draw(dl);
 
@@ -949,12 +949,12 @@ namespace osucat {
 				Image avatar(name);
 				avatar.resize(Geometry(75, 75));
 				Image imtemp(Geometry(80, 80), Color("none"));
-				imtemp.fillColor(Color("white"));
+				imtemp.fillColor(Color("#ffffff"));
 				imtemp.draw(DrawableCircle(40, 40, 2.5, 40));
 				imtemp.composite(avatar, 3, 3, InCompositeOp);
 				imtemp.fillColor("none");
 				imtemp.strokeWidth(1.0);
-				imtemp.strokeColor("white");
+				imtemp.strokeColor("#ffffff");
 				imtemp.draw(DrawableCircle(40, 40, 2.5, 40));
 				score.composite(imtemp, 40, 425, OverCompositeOp);
 			}
@@ -963,12 +963,12 @@ namespace osucat {
 				Image avatar("./work/default_avatar.png");
 				avatar.resize(Geometry(75, 75));
 				Image imtemp(Geometry(80, 80), Color("none"));
-				imtemp.fillColor(Color("white"));
+				imtemp.fillColor(Color("#ffffff"));
 				imtemp.draw(DrawableCircle(40, 40, 2.5, 40));
 				imtemp.composite(avatar, 3, 3, InCompositeOp);
 				imtemp.fillColor("none");
 				imtemp.strokeWidth(1.0);
-				imtemp.strokeColor("white");
+				imtemp.strokeColor("#ffffff");
 				imtemp.draw(DrawableCircle(40, 40, 2.5, 40));
 				score.composite(imtemp, 40, 425, OverCompositeOp);
 			}
@@ -979,9 +979,9 @@ namespace osucat {
 			gmtime_s(&tmt, (time_t*)&data.score_info.achieved_timestamp);
 			strftime(ctemp, 512, "%Y/%m/%d %H:%M", &tmt);
 			dl.clear();
-			dl.push_back(DrawableFillColor("black"));
+			dl.push_back(DrawableFillColor("#000000"));
 			dl.push_back(DrawableText(145, 499, ctemp));
-			dl.push_back(DrawableFillColor("white"));
+			dl.push_back(DrawableFillColor("#ffffff"));
 			dl.push_back(DrawableText(145, 496, ctemp));
 			score.draw(dl);
 			// diff circle
@@ -1140,7 +1140,7 @@ namespace osucat {
 			score.fontPointsize(53.56);
 			dl.push_back(DrawableTextAlignment(AlignType::CenterAlign));
 			sprintf_s(ctemp, 512, "%.2f%%", data.pp_info.data.accuracy);
-			dl.push_back(DrawableFillColor("black"));
+			dl.push_back(DrawableFillColor("#000000"));
 			dl.push_back(DrawableText(360, 961, ctemp));
 			// ColorHSL hsl("#ffbd1f");
 			ColorHSL hsl("#87ff6a");
@@ -1151,14 +1151,14 @@ namespace osucat {
 			dl.push_back(DrawableText(360, 958, ctemp));
 			// combo
 			if (data.mode == osu_api::v1::mode::std || data.mode == osu_api::v1::mode::ctb) {
-				dl.push_back(DrawableFillColor("black"));
+				dl.push_back(DrawableFillColor("#000000"));
 				dl.push_back(DrawableText(1598, 961, "/"));
-				dl.push_back(DrawableFillColor("white"));
+				dl.push_back(DrawableFillColor("#ffffff"));
 				dl.push_back(DrawableText(1598, 958, "/"));
 				score.fontTypeMetrics("/", &metric);
 				sprintf_s(ctemp, 512, "%dx", data.pp_info.data.combo);
 				dl.push_back(DrawableTextAlignment(AlignType::RightAlign));
-				dl.push_back(DrawableFillColor("black"));
+				dl.push_back(DrawableFillColor("#000000"));
 				dl.push_back(DrawableText(1598 - metric.textWidth() / 2.0, 961, ctemp));
 				hsl = ColorHSL("#87ff6a");
 				// hsl.hue(hsl.hue() * data.pp_info.data.combo / data.pp_info.data.maxcombo);
@@ -1170,7 +1170,7 @@ namespace osucat {
 				dl.push_back(DrawableText(1598 - metric.textWidth() / 2.0, 958, ctemp));
 				sprintf_s(ctemp, 512, "%dx", data.pp_info.data.maxcombo);
 				dl.push_back(DrawableTextAlignment(AlignType::LeftAlign));
-				dl.push_back(DrawableFillColor("black"));
+				dl.push_back(DrawableFillColor("#000000"));
 				dl.push_back(DrawableText(1598 + metric.textWidth() / 2.0, 961, ctemp));
 				dl.push_back(DrawableFillColor("#87ff6a"));
 				dl.push_back(DrawableText(1598 + metric.textWidth() / 2.0, 958, ctemp));
@@ -1178,7 +1178,7 @@ namespace osucat {
 			else {
 				sprintf_s(ctemp, 512, "%dx", data.pp_info.data.combo);
 				dl.push_back(DrawableTextAlignment(AlignType::CenterAlign));
-				dl.push_back(DrawableFillColor("black"));
+				dl.push_back(DrawableFillColor("#000000"));
 				dl.push_back(DrawableText(1598, 961, ctemp));
 				dl.push_back(DrawableFillColor("#87ff6a"));
 				dl.push_back(DrawableText(1598, 958, ctemp));
@@ -1192,9 +1192,9 @@ namespace osucat {
 			osu_api::v1::user_info UI = { 0 };
 			osu_api::v1::api::GetUser(data.score_info.user_id, osu_api::v1::mode::std, &UI);
 			// draw useranme
-			dl.push_back(DrawableFillColor("black"));
+			dl.push_back(DrawableFillColor("#000000"));
 			dl.push_back(DrawableText(145, 461, UI.username));
-			dl.push_back(DrawableFillColor("white"));
+			dl.push_back(DrawableFillColor("#ffffff"));
 			dl.push_back(DrawableText(145, 458, UI.username));
 			score.draw(dl);
 			switch (data.beatmap_info.approved) {
@@ -1446,13 +1446,13 @@ namespace osucat {
 	}
 
 	string bpht_img(const std::string message) {
-		Image img(Geometry(380, 320), "none");
+		Image img(Geometry(430, 220), "#ffffff");
 		DrawableList dl;
 		img.density(Point(300, 300));
 		dl.push_back(DrawableGravity(GravityType::UndefinedGravity));
 		dl.push_back(DrawableFont("./work/fonts/Alibaba-PuHuiTi-Medium.ttf"));
 		dl.push_back(DrawablePointSize(20));
-		dl.push_back(DrawableFillColor("black"));
+		dl.push_back(DrawableFillColor("#000000"));
 		dl.push_back(DrawableText(20, 20, message));
 		img.draw(dl);
 		img.quality(100);

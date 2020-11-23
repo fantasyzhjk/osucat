@@ -35,7 +35,7 @@ namespace osucat::addons {
 
 		static void roll(const Target tar) {
 			string cmd = tar.message.substr(4);
-			cmd = utils::unescape(cmd);
+			cmd = utils::cqunescape(cmd);
 			if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"不想理你..."); return; }
 			if (cmd.length() > 199) { send_message(tar, u8"你想干嘛..."); return; }
 			utils::string_trim(cmd);
@@ -85,7 +85,7 @@ namespace osucat::addons {
 
 		static void marketingGenerator(const Target tar) {
 			string cmd = tar.message.substr(18);
-			cmd = utils::unescape(cmd);
+			cmd = utils::cqunescape(cmd);
 			if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"不想理你..."); return; }
 			if (cmd.length() > 400) { send_message(tar, u8"太长了！"); return; }
 			utils::string_trim(cmd);
@@ -118,7 +118,7 @@ namespace osucat::addons {
 		static void randEvents(const Target tar) {
 			string cmd = tar.message;
 			try {
-				cmd = utils::unescape(cmd);
+				cmd = utils::cqunescape(cmd);
 				if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"不想理你..."); return; }
 				if (cmd.length() > 1024) { send_message(tar, u8"你想干嘛..."); return; }
 				utils::string_trim(cmd);
@@ -185,7 +185,7 @@ namespace osucat::addons {
 
 		static void nbnhhsh(const Target tar) {
 			string cmd = tar.message.substr(7);
-			cmd = utils::unescape(cmd);
+			cmd = utils::cqunescape(cmd);
 			utils::string_trim(cmd);
 			if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"不想理你..."); return; }
 			if (cmd.length() > 199) { send_message(tar, u8"太长了！"); return; }
@@ -240,7 +240,7 @@ namespace osucat::addons {
 				int throwcount = 0;
 				for (int i = 0; i < j.size(); ++i) { if (stoll(j[i]["sender"].get<std::string>()) == tar.user_id) { ++throwcount; } }
 				if (throwcount > 20) { send_message(tar, u8"你已经扔了20个瓶子出去了...休息一下再扔吧...");				return; }
-				cmd = utils::unescape(cmd);
+				cmd = utils::cqunescape(cmd);
 				utils::string_trim(cmd);
 				if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"不想理你...");			return; }
 				if (cmd.length() == 0) { send_message(tar, u8"不如写点什么再扔...?");					return; }
