@@ -90,6 +90,7 @@ namespace steamcat {
 				returnmsg += u8"\n自定义链接：" + us.profileurl;
 			}
 			else returnmsg += u8"\n主页链接：" + us.profileurl;
+			returnmsg += "\n[" + to_string(utils::randomNum(10000, 100000)) + "]";
 			thread DFH(bind(&utils::DelFileHandler, path, 120));
 			DFH.detach();
 			return returnmsg;
@@ -151,6 +152,67 @@ namespace steamcat {
 				returnmsg += u8"\n自定义链接：" + us.profileurl;
 			}
 			else returnmsg += u8"\n主页链接：" + us.profileurl;
+			returnmsg += "\n[" + to_string(utils::randomNum(10000, 100000)) + "]";
+			thread DFH(bind(&utils::DelFileHandler, path, 120));
+			DFH.detach();
+			return returnmsg;
+		}
+
+		static string bancheckExpireMsg(const UserInfo us, const UserBanStats ubs, int64_t ListenTime) {
+			string returnmsg, radstr = utils::rand_str();
+			string path = to_string(OC_ROOT_PATH) + "\\data\\images\\osucat\\" + radstr + ".png";
+			if (us.avatarfull != "null") {
+				osucat::NetConnection::DownloadFile(us.avatarfull, path);
+				returnmsg += u8"[CQ:image,file=osucat\\" + radstr + ".png]" + "\n";
+			}
+			if (utils::forbiddenWordsLibrary(us.personaname)) {
+				returnmsg += u8"用户名：*违禁词屏蔽*";
+			}
+			else returnmsg += u8"用户名：" + us.personaname;
+			if (us.realname != "null") {
+				if (utils::forbiddenWordsLibrary(us.realname)) {
+					returnmsg += u8"\n真实姓名：*违禁词屏蔽*";
+				}
+				else returnmsg += u8"\n真实姓名：" + us.realname;
+			}
+			if (us.loccountrycode != "null") {
+				returnmsg += u8"\n地区：" + utils::getCountryNameByCode(us.loccountrycode);
+			}
+			if (us.lastlogoff != 0) {
+				returnmsg += u8"\n最后登录于：" + utils::unixTime2Str(us.lastlogoff);
+			}
+			returnmsg += u8"\nSteamID：" + to_string(us.steamid);
+			if (ubs.CommunityBanned) {
+				returnmsg += u8"\n用户当前已被社区封禁";
+			}
+			if (ubs.EconomyBan != "none") {
+				returnmsg += u8"\n用户当前已被禁止交易";
+			}
+			if (ubs.VACBanned) {
+				returnmsg += u8"\nVAC封禁：是";
+			}
+			if (ubs.NumberOfGameBans > 0) {
+				returnmsg += u8"\n游戏封禁：是";
+			}
+			if (ubs.VACBanned) {
+				returnmsg += u8"\nVAC封禁次数：" + to_string(ubs.NumberOfVACBans);
+			}
+			if (ubs.NumberOfGameBans > 0) {
+				returnmsg += u8"\n游戏封禁次数：" + to_string(ubs.NumberOfGameBans);
+			}
+			if (ubs.VACBanned || ubs.NumberOfGameBans > 0) {
+				returnmsg += u8"\n上次封禁于：" + to_string(ubs.DaysSinceLastBan) + u8" 天前";
+			}
+			if (ubs.CommunityBanned == false && ubs.EconomyBan == "none" && ubs.NumberOfGameBans == 0 && ubs.VACBanned == false) {
+				returnmsg += u8"\n该用户无任何不良记录。";
+			}
+			if (us.profileurl.find("/profiles/") == string::npos) {
+				returnmsg += u8"\n自定义链接：" + us.profileurl;
+			}
+			else returnmsg += u8"\n主页链接：" + us.profileurl;
+			returnmsg += u8"\n\n\n该用户于 " + utils::unixTime2Str(ListenTime) +
+				u8" 被最后一次加入了监听列表，至今已超过2个月未查询到有新增的作弊封禁，即默认无作弊行为，将从监听列表中移除，如确定其有作弊行为，请重新添加至监听列表。";
+			returnmsg += "\n[" + to_string(utils::randomNum(10000, 100000)) + "]";
 			thread DFH(bind(&utils::DelFileHandler, path, 120));
 			DFH.detach();
 			return returnmsg;
@@ -222,6 +284,7 @@ namespace steamcat {
 				json j = json::parse(source)["response"];
 				if (j["success"].get<int>() == 1) {
 					steamid = stoll(j["steamid"].get<string>());
+					ban_check(steamid, &ubs);
 				}
 				else { send_message(tar, u8"未找到此用户"); return; }
 			}
@@ -233,8 +296,7 @@ namespace steamcat {
 				}
 				else { send_message(tar, u8"未找到此用户"); return; }
 			}
-			else if (utils::isNum(tmp) && tmp.length() > 13) {
-				UserBanStats ubs = { 0 };
+			else if (utils::isNum(tmp) && tmp.length() > 5) {
 				if (ban_check(stoll(tmp), &ubs)) {
 					steamid = stoll(tmp);
 				}
@@ -244,6 +306,7 @@ namespace steamcat {
 				json j = json::parse(osucat::NetConnection::HttpGet("http://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key=" + to_string(SC_STEAM_API_KEY) + "&vanityurl=" + tmp))["response"];
 				if (j["success"].get<int>() == 1) {
 					steamid = stoll(j["steamid"].get<string>());
+					ban_check(steamid, &ubs);
 				}
 				else { send_message(tar, u8"未找到此用户"); return; }
 			}
@@ -253,7 +316,7 @@ namespace steamcat {
 			if (tar.type == Target::Type::GROUP) {
 				if (db.steam_add_ban_listening(steamid, ubs.NumberOfVACBans, ubs.NumberOfGameBans, tar.user_id, tar.group_id)) send_message(tar, u8"用户已成功添加到监听列表，将会在其受到封禁后推送至本群");
 				else {
-					if (db.steam_change_ban_listening_receive_groupid(steamid, tar.group_id)) send_message(tar, u8"用户已成功添加到监听列表，将会在其受到封禁后推送至本群");
+					if (db.steam_change_ban_listening_receive_groupid(steamid, tar.group_id, tar.user_id)) send_message(tar, u8"用户已成功添加到监听列表，将会在其受到封禁后推送至本群");
 					else {
 						if (db.steam_change_ban_listening_receive_userid(steamid, tar.user_id))send_message(tar, u8"该用户已存在于群推送列表中，已将其加入您的私聊推送列表");
 						else send_message(tar, u8"该用户已存在于您的推送列表中");
@@ -304,14 +367,14 @@ namespace steamcat {
 					if (cui.ReceiveGroupId.find(';') == string::npos) {
 						if (cui.ReceiveGroupId != "null") {
 							send_group_message(stoll(cui.ReceiveGroupId), banrtnmsg(us, ubs, true));
-							Sleep(1000);
+							Sleep(3000);
 						}
 					}
 					else {
 						vector<string> b = utils::string_split(cui.ReceiveGroupId, ';');
 						for (int i = 0; i < b.size(); ++i) {
 							send_group_message(stoll(b[i]), banrtnmsg(us, ubs, true));
-							Sleep(1000);
+							Sleep(3000);
 						}
 					}
 					if (cui.ReceiveUserId.find(';') == string::npos) {
@@ -323,7 +386,7 @@ namespace steamcat {
 						vector<string> b = utils::string_split(cui.ReceiveUserId, ';');
 						for (int i = 0; i < b.size(); ++i) {
 							send_private_message(stoll(b[i]), banrtnmsg(us, ubs, true));
-							Sleep(1000);
+							Sleep(3000);
 						}
 					}
 					osucat::Database db;
@@ -334,14 +397,14 @@ namespace steamcat {
 					if (cui.ReceiveGroupId.find(';') != string::npos) {
 						if (cui.ReceiveGroupId != "null") {
 							send_group_message(stoll(cui.ReceiveGroupId), banrtnmsg(us, ubs, false));
-							Sleep(1000);
+							Sleep(3000);
 						}
 					}
 					else {
 						vector<string> b = utils::string_split(cui.ReceiveGroupId, ';');
 						for (int i = 0; i < b.size(); ++i) {
 							send_group_message(stoll(b[i]), banrtnmsg(us, ubs, false));
-							Sleep(1000);
+							Sleep(3000);
 						}
 					}
 					if (cui.ReceiveUserId.find(';') != string::npos) {
@@ -353,7 +416,39 @@ namespace steamcat {
 						vector<string> b = utils::string_split(cui.ReceiveUserId, ';');
 						for (int i = 0; i < b.size(); ++i) {
 							send_private_message(stoll(b[i]), banrtnmsg(us, ubs, false));
-							Sleep(1000);
+							Sleep(3000);
+						}
+					}
+					osucat::Database db;
+					db.Connect();
+					db.steam_change_ban_stats(ubs.SteamId);
+				}
+				int64_t now = time(NULL);
+				int64_t difft = cui.ListenTime + 86400 * 60;
+				if (now > difft) {
+					if (cui.ReceiveGroupId.find(';') == string::npos) {
+						if (cui.ReceiveGroupId != "null") {
+							send_group_message(stoll(cui.ReceiveGroupId), bancheckExpireMsg(us, ubs, cui.ListenTime));
+							Sleep(3000);
+						}
+					}
+					else {
+						vector<string> b = utils::string_split(cui.ReceiveGroupId, ';');
+						for (int i = 0; i < b.size(); ++i) {
+							send_group_message(stoll(b[i]), bancheckExpireMsg(us, ubs, cui.ListenTime));
+							Sleep(3000);
+						}
+					}
+					if (cui.ReceiveUserId.find(';') == string::npos) {
+						if (cui.ReceiveUserId != "null") {
+							send_private_message(stoll(cui.ReceiveUserId), bancheckExpireMsg(us, ubs, cui.ListenTime));
+						}
+					}
+					else {
+						vector<string> b = utils::string_split(cui.ReceiveUserId, ';');
+						for (int i = 0; i < b.size(); ++i) {
+							send_private_message(stoll(b[i]), bancheckExpireMsg(us, ubs, cui.ListenTime));
+							Sleep(3000);
 						}
 					}
 					osucat::Database db;
@@ -410,15 +505,13 @@ namespace steamcat {
 			try {
 				string source = osucat::NetConnection::HttpGet("http://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=" + to_string(SC_STEAM_API_KEY) + "&steamids=" + to_string(SteamId));
 				json j = json::parse(source)["players"][0];
-				UserBanStats ubs;
-				ubs.SteamId = stoll(j["SteamId"].get<string>());
-				ubs.CommunityBanned = j["CommunityBanned"].get<bool>();
-				ubs.VACBanned = j["VACBanned"].get<bool>();
-				ubs.NumberOfGameBans = j["NumberOfGameBans"].get<int>();
-				ubs.NumberOfVACBans = j["NumberOfVACBans"].get<int>();
-				ubs.DaysSinceLastBan = j["DaysSinceLastBan"].get<int>();
-				ubs.EconomyBan = j["EconomyBan"].get<string>();
-				*rtn = ubs;
+				rtn->SteamId = stoll(j["SteamId"].get<string>());
+				rtn->CommunityBanned = j["CommunityBanned"].get<bool>();
+				rtn->VACBanned = j["VACBanned"].get<bool>();
+				rtn->NumberOfGameBans = j["NumberOfGameBans"].get<int>();
+				rtn->NumberOfVACBans = j["NumberOfVACBans"].get<int>();
+				rtn->DaysSinceLastBan = j["DaysSinceLastBan"].get<int>();
+				rtn->EconomyBan = j["EconomyBan"].get<string>();
 			}
 			catch (osucat::NetWork_Exception) {
 				return false;
@@ -428,8 +521,6 @@ namespace steamcat {
 			}
 			return true;
 		}
-
-
 
 	};
 

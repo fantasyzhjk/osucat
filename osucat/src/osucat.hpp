@@ -3703,6 +3703,10 @@ namespace osucat {
 
 		static void _FolderCheck() {
 			cout << u8"正在检查必要目录完整性..." << endl;
+			if (!utils::isDirExist(".\\log")) {
+				cout << "Folder 'log' does not exist, created." << endl;
+				CreateDirectoryA(".\\log", NULL);
+			}
 			if (!utils::isDirExist(".\\data")) {
 				cout << "Folder 'data' does not exist, created." << endl;
 				CreateDirectoryA(".\\data", NULL);

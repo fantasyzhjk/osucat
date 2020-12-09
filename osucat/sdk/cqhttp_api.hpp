@@ -227,75 +227,121 @@ namespace cqhttp_api {
 		return rtn;
 	}
 
+	/*
+	Type
+	 0 = Normal
+	-1 = Warning
+	-2 = Error
+	-3 = Fatal
+	*/
+	void LogRecorder(int Type, std::string Message) {
+		char tmp[10240];
+		std::string type;
+		switch (Type) {
+		case 0: type = "Info";
+		case -1: type = "Warning";
+		case -2: type = "Error";
+		case -3:type = "Fatal";
+		default: return;
+		}
+		sprintf_s(tmp,
+			u8"[%s] [%s] : %s",
+			utils::unixTime2Str(time(NULL)).c_str(),
+			type.c_str(),
+			Message.c_str());
+		std::ofstream OUTFILE(".\\log\\" + to_string(output_prefix) + ".log");
+		if (!OUTFILE.is_open()) {
+			std::thread MultiProcessThread(bind(&LogRecorder, Type, Message));
+			MultiProcessThread.detach();
+			return;
+		}
+		else {
+			OUTFILE << tmp << std::endl;
+			OUTFILE.close();
+		}
+	}
+
 	Type Parser(std::string rawstr, Target* target, GroupSender* sender, Request* request) {
 		if (rawstr.find("user_id") != std::string::npos) {
 			cqhttp_api::Target t;
 			json j = json::parse(rawstr);
 			cqhttp_api::Type type;
-			if (j["post_type"].get<std::string>() == "message") {
-				type = cqhttp_api::Type::MESSAGE;
+			try {
+				if (j["post_type"].get<std::string>() == "message") {
+					type = cqhttp_api::Type::MESSAGE;
+				}
+				else if (j["post_type"].get<std::string>() == "request") {
+					type = cqhttp_api::Type::REQUEST;
+				}
+				else return cqhttp_api::Type::INVALID;
 			}
-			else if (j["post_type"].get<std::string>() == "request") {
-				type = cqhttp_api::Type::REQUEST;
+			catch (std::exception& ex) {
+				LogRecorder(-2, u8"P1.消息解析发生错误，错误信息：" + to_string(ex.what()) + u8" , Debug信息： " + rawstr);
+				return cqhttp_api::Type::INVALID;
 			}
-			else return cqhttp_api::Type::INVALID;
-			if (type == cqhttp_api::Type::MESSAGE) {
-				cqhttp_api::Target tar;
-				cqhttp_api::GroupSender sdr;
-				json jm = json::parse(rawstr)["sender"];
-				if (j["message_type"].get<std::string>() == "private") {
-					tar.type = cqhttp_api::Target::Type::PRIVATE;
+			try {
+				if (type == cqhttp_api::Type::MESSAGE) {
+					cqhttp_api::Target tar;
+					cqhttp_api::GroupSender sdr;
+					json jm = json::parse(rawstr)["sender"];
+					if (j["message_type"].get<std::string>() == "private") {
+						tar.type = cqhttp_api::Target::Type::PRIVATE;
+					}
+					else if (j["message_type"].get<std::string>() == "group") {
+						tar.type = cqhttp_api::Target::Type::GROUP;
+						tar.group_id = j["group_id"].get<int64_t>();
+						sdr.card = jm["card"].get<std::string>();
+						sdr.title = jm["title"].get<std::string>();
+					}
+					sdr.age = jm["age"].get<int>();
+					sdr.nickname = jm["nickname"].get<std::string>();
+					tar.nickname = sdr.nickname;
+					tar.user_id = j["user_id"].get<int64_t>();
+					tar.time = j["time"].get<int64_t>();
+					tar.message = j["message"].get<std::string>();
+					std::string msg;
+					if (tar.type == cqhttp_api::Target::Type::PRIVATE) {
+						msg += u8"[" + utils::unixTime2Str(tar.time) + u8"] " + output_prefix + u8"[↓]: 好友 " + to_string(tar.user_id) + u8" 的消息：";
+						msg += tar.message;
+					}
+					else if (tar.type == cqhttp_api::Target::Type::GROUP) {
+						msg += u8"[" + utils::unixTime2Str(tar.time) + u8"] " + output_prefix + u8"[↓]: 群 " + to_string(tar.group_id) + u8" 的 " + to_string(tar.user_id) + u8" 的消息：";
+						msg += tar.message;
+					}
+					std::cout << msg << std::endl;
+					*target = tar;
+					*sender = sdr;
+					return type;
 				}
-				else if (j["message_type"].get<std::string>() == "group") {
-					tar.type = cqhttp_api::Target::Type::GROUP;
-					tar.group_id = j["group_id"].get<int64_t>();
-					sdr.card = jm["card"].get<std::string>();
-					sdr.title = jm["title"].get<std::string>();
+				else if (type == cqhttp_api::Type::REQUEST) {
+					cqhttp_api::Request r;
+					cqhttp_api::Request::Type rt;
+					std::string msg;
+					r.message = j["comment"].get<std::string>();
+					r.user_id = j["user_id"].get<int64_t>();
+					r.flag = j["flag"].get<std::string>();
+					r.time = j["time"].get<int64_t>();
+					if (j["request_type"].get<std::string>() == "friend") {
+						rt = cqhttp_api::Request::Type::FRIEND;
+						r.type = cqhttp_api::Request::Type::FRIEND;
+						msg += u8"[" + utils::unixTime2Str(r.time) + u8"] " + output_prefix + u8"[↓]: 收到来自用户 " + to_string(r.user_id) + u8" 的好友请求";
+						if (!r.message.empty())msg += u8"附加消息：" + r.message;
+					}
+					else if (j["request_type"].get<std::string>() == "group") {
+						rt = cqhttp_api::Request::Type::GROUP;
+						r.type = cqhttp_api::Request::Type::GROUP;
+						r.subtype = j["request_type"].get<std::string>() == "invite" ? cqhttp_api::Request::SubType::INVITE : cqhttp_api::Request::SubType::ADD;
+						msg += u8"[" + utils::unixTime2Str(r.time) + u8"] " + output_prefix + u8"[↓]: 收到来自用户 " + to_string(r.user_id) + u8" 的群邀请";
+						if (!r.message.empty())msg += u8"附加消息：" + r.message;
+					}
+					std::cout << msg << std::endl;
+					*request = r;
+					return type;
 				}
-				sdr.age = jm["age"].get<int>();
-				sdr.nickname = jm["nickname"].get<std::string>();
-				tar.nickname = sdr.nickname;
-				tar.user_id = j["user_id"].get<int64_t>();
-				tar.time = j["time"].get<int64_t>();
-				tar.message = j["message"].get<std::string>();
-				std::string msg;
-				if (tar.type == cqhttp_api::Target::Type::PRIVATE) {
-					msg += u8"[" + utils::unixTime2Str(tar.time) + u8"] " + output_prefix + u8"[↓]: 好友 " + to_string(tar.user_id) + u8" 的消息：";
-					msg += tar.message;
-				}
-				else if (tar.type == cqhttp_api::Target::Type::GROUP) {
-					msg += u8"[" + utils::unixTime2Str(tar.time) + u8"] " + output_prefix + u8"[↓]: 群 " + to_string(tar.group_id) + u8" 的 " + to_string(tar.user_id) + u8" 的消息：";
-					msg += tar.message;
-				}
-				std::cout << msg << std::endl;
-				*target = tar;
-				*sender = sdr;
-				return type;
 			}
-			else if (type == cqhttp_api::Type::REQUEST) {
-				cqhttp_api::Request r;
-				cqhttp_api::Request::Type rt;
-				std::string msg;
-				r.message = j["comment"].get<std::string>();
-				r.user_id = j["user_id"].get<int64_t>();
-				r.flag = j["flag"].get<std::string>();
-				r.time = j["time"].get<int64_t>();
-				if (j["request_type"].get<std::string>() == "friend") {
-					rt = cqhttp_api::Request::Type::FRIEND;
-					r.type = cqhttp_api::Request::Type::FRIEND;
-					msg += u8"[" + utils::unixTime2Str(r.time) + u8"] " + output_prefix + u8"[↓]: 收到来自用户 " + to_string(r.user_id) + u8" 的好友请求";
-					if (!r.message.empty())msg += u8"附加消息：" + r.message;
-				}
-				else if (j["request_type"].get<std::string>() == "group") {
-					rt = cqhttp_api::Request::Type::GROUP;
-					r.type = cqhttp_api::Request::Type::GROUP;
-					r.subtype = j["request_type"].get<std::string>() == "invite" ? cqhttp_api::Request::SubType::INVITE : cqhttp_api::Request::SubType::ADD;
-					msg += u8"[" + utils::unixTime2Str(r.time) + u8"] " + output_prefix + u8"[↓]: 收到来自用户 " + to_string(r.user_id) + u8" 的群邀请";
-					if (!r.message.empty())msg += u8"附加消息：" + r.message;
-				}
-				std::cout << msg << std::endl;
-				*request = r;
-				return type;
+			catch (std::exception& ex) {
+				LogRecorder(-2, u8"P2.消息解析发生错误，错误信息：" + to_string(ex.what()) + u8" , Debug信息： " + rawstr);
+				return cqhttp_api::Type::INVALID;
 			}
 		}
 		return cqhttp_api::Type::INVALID;

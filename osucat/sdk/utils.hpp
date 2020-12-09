@@ -2649,6 +2649,12 @@ namespace cqhttp_api::utils {
 		sprintf_s(buffer, 128, "%I64dd %I64dh %I64dm %I64ds", day, hour, minute, second);
 		return buffer;
 	}
+	static std::string Duration2DayString(uint64_t duration) {
+		uint64_t day = duration / 86400;
+		char buffer[32];
+		sprintf_s(buffer, 32, "%I64d", day);
+		return buffer;
+	}
 	static std::string Duration2StrWithoutDAY(uint64_t duration) {
 		uint64_t hour, minute, second;
 		hour = duration / 3600;
@@ -2679,7 +2685,7 @@ namespace cqhttp_api::utils {
 		}
 		return false;
 	}
-	static int64_t randomNum(int minNum, int64_t maxNum) {
+	static int64_t randomNum(int64_t minNum, int64_t maxNum) {
 		srand((unsigned)GetTickCount());
 		int64_t rtn;
 		try {

@@ -27,6 +27,7 @@ namespace steamcat {
 		int GameBanCount;
 		string ReceiveUserId;
 		string ReceiveGroupId;
+		int64_t ListenTime;
 	};
 }
 
@@ -843,10 +844,11 @@ namespace osucat {
 					t.GameBanCount = stoi(j[i]["GameBanCount"].get<string>());
 					t.ReceiveUserId = j[i]["ReceiveUserId"].get<string>();
 					t.ReceiveGroupId = j[i]["ReceiveGroupId"].get<string>();
+					t.ListenTime = stoll(j[i]["ListenTime"].get<string>());
 					cui.push_back(t);
 				}
 			}
-			catch (osucat::database_exception &ex) { steamcat::CSGOUserInfo t; t.SteamId = -1; t.Available = false; t.ReceiveUserId = "null"; t.ReceiveGroupId = "null"; cui.push_back(t); }
+			catch (osucat::database_exception& ex) { steamcat::CSGOUserInfo t; t.SteamId = -1; t.Available = false; t.ReceiveUserId = "null"; t.ReceiveGroupId = "null"; t.ListenTime = 946656000; cui.push_back(t); }
 			catch (std::exception& ex) { cout << ex.what() << endl; }
 			return cui;
 		}
@@ -856,34 +858,40 @@ namespace osucat {
 		}
 
 		bool steam_add_ban_listening(int64_t SteamId, int VacCount, int GameCount, int64_t ReceiveUserId = EOF, int64_t ReceiveGroupId = EOF) {
-			string query = "INSERT INTO `steam_ban_listen` (SteamId,Available,VACBanCount,GameBanCount,ReceiveUserId,ReceiveGroupId) VALUES (";
+			string query = "INSERT INTO `steam_ban_listen` (SteamId,Available,VACBanCount,GameBanCount,ReceiveUserId,ReceiveGroupId,ListenTime) VALUES (";
 			query += to_string(SteamId) + ",1," + to_string(VacCount) + "," + to_string(GameCount) + ",";
 			if (ReceiveUserId == EOF) { query += "\"null\","; }
 			else { query += "\"" + std::to_string(ReceiveUserId) + "\","; }
 			if (ReceiveGroupId == EOF) { query += "\"null\")"; }
-			else { query += "\"" + std::to_string(ReceiveGroupId) + "\")"; }
+			else { query += "\"" + std::to_string(ReceiveGroupId) + "\","; }
+			query += to_string(time(NULL)) + "\")";
 			try { this->Insert(query); }
 			catch (osucat::database_exception) {
-				try { this->Update("UPDATE `steam_ban_listen` SET VACBanCount=" + to_string(VacCount) + ",GameBanCount=" + to_string(GameCount) + " WHERE SteamId=" + to_string(SteamId)); }
+				try {
+					this->Update("UPDATE `steam_ban_listen` SET VACBanCount=" + to_string(VacCount) +
+						",GameBanCount=" + to_string(GameCount) +
+						",ListenTime=" + to_string(time(NULL)) +
+						" WHERE SteamId=" + to_string(SteamId));
+				}
 				catch (osucat::database_exception) {}
 				return false;
 			}
 			return true;
 		}
 
-		bool steam_change_ban_listening_receive_groupid(int64_t SteamId, int64_t ReceiveGroupId) {
+		bool steam_change_ban_listening_receive_groupid(int64_t SteamId, int64_t ReceiveGroupId, int64_t ReceiveUserId) {
 			json j = this->Select("SELECT ReceiveGroupId FROM `steam_ban_listen` WHERE SteamId=" + std::to_string(SteamId));
 			string tmp = j[0]["ReceiveGroupId"].get<string>();
-			if (tmp.find(';') == string::npos) {
+			if (tmp.find(';') != string::npos) {
 				vector<string> t = cqhttp_api::utils::string_split(tmp, ';');
 				for (int i = 0; i < t.size(); ++i) { if (t[i] == to_string(ReceiveGroupId)) { return false; } }
-				this->Update("UPDATE `steam_ban_listen` SET ReceiveGroupId=\"" + tmp + ";" + std::to_string(ReceiveGroupId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId));
+				this->Update("UPDATE `steam_ban_listen` SET Available=1,ReceiveGroupId=\"" + tmp + ";" + std::to_string(ReceiveGroupId) + "\"" + ",ListenTime=" + to_string(time(NULL)) + " WHERE SteamId=" + std::to_string(SteamId));
 				return true;
 			}
 			else {
 				if (tmp == to_string(ReceiveGroupId)) { return false; }
-				if (tmp == "null") { this->Update("UPDATE `steam_ban_listen` SET ReceiveGroupId=\"" + std::to_string(ReceiveGroupId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId)); }
-				else { this->Update("UPDATE `steam_ban_listen` SET ReceiveGroupId=\"" + tmp + ";" + std::to_string(ReceiveGroupId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId)); }
+				if (tmp == "null") { this->Update("UPDATE `steam_ban_listen` SET Available=1,ReceiveGroupId=\"" + std::to_string(ReceiveGroupId) + "\"" + ",ListenTime=" + to_string(time(NULL)) + "WHERE SteamId=" + std::to_string(SteamId)); }
+				else { this->Update("UPDATE `steam_ban_listen` SET Available=1,ReceiveGroupId=\"" + tmp + ";" + std::to_string(ReceiveGroupId) + "\"" + ",ListenTime=" + to_string(time(NULL)) + " WHERE SteamId=" + std::to_string(SteamId)); }
 				return true;
 			}
 		}
@@ -891,16 +899,16 @@ namespace osucat {
 		bool steam_change_ban_listening_receive_userid(int64_t SteamId, int64_t ReceiveUserId) {
 			json j = this->Select("SELECT ReceiveUserId FROM `steam_ban_listen` WHERE SteamId=" + std::to_string(SteamId));
 			string tmp = j[0]["ReceiveUserId"].get<string>();
-			if (tmp.find(';') == string::npos) {
+			if (tmp.find(';') != string::npos) {
 				vector<string> t = cqhttp_api::utils::string_split(tmp, ';');
 				for (int i = 0; i < t.size(); ++i) { if (t[i] == to_string(ReceiveUserId)) { return false; } }
-				this->Update("UPDATE `steam_ban_listen` SET ReceiveUserId=\"" + tmp + ";" + std::to_string(ReceiveUserId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId));
+				this->Update("UPDATE `steam_ban_listen` SET Available=1,ReceiveUserId=\"" + tmp + ";" + std::to_string(ReceiveUserId) + "\"" + ",ListenTime=" + to_string(time(NULL)) + " WHERE SteamId=" + std::to_string(SteamId));
 				return true;
 			}
 			else {
 				if (tmp == to_string(ReceiveUserId)) { return false; }
-				if (tmp == "null") { this->Update("UPDATE `steam_ban_listen` SET ReceiveUserId=\"" + std::to_string(ReceiveUserId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId)); }
-				else { this->Update("UPDATE `steam_ban_listen` SET ReceiveUserId=\"" + tmp + ";" + std::to_string(ReceiveUserId) + "\"" + "WHERE SteamId=" + std::to_string(SteamId)); }
+				if (tmp == "null") { this->Update("UPDATE `steam_ban_listen` SET Available=1,ReceiveUserId=\"" + std::to_string(ReceiveUserId) + "\"" + ",ListenTime=" + to_string(time(NULL)) + " WHERE SteamId=" + std::to_string(SteamId)); }
+				else { this->Update("UPDATE `steam_ban_listen` SET Available=1,ReceiveUserId=\"" + tmp + ";" + std::to_string(ReceiveUserId) + "\"" + ",ListenTime=" + to_string(time(NULL)) + " WHERE SteamId=" + std::to_string(SteamId)); }
 				return true;
 			}
 		}
