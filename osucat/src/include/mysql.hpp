@@ -620,15 +620,14 @@ namespace osucat {
 			catch (osucat::database_exception) { return 0; }
 		}
 
-		bool osu_setNewBadge(Badgeinfo bi, int* id) {
+		int osu_setNewBadge(Badgeinfo bi) {
 			try {
 				this->Insert("INSERT INTO osu_badge_list (name,name_chinese,description) VALUES (\"" + bi.name + "\",\"" + bi.name_chinese + "\",\"" + bi.description + "\")");
 				json j = this->Select("Select id from osu_badge_list");
-				*id = j.size() - 1;
-				return true;
+				return j.size() - 1;
 			}
-			catch (osucat::database_exception) { *id = -1; }
-			return false;
+			catch (osucat::database_exception) { return -1; }
+			return -1;
 		}
 
 		bool osu_updatebadgeinfo(Badgeinfo bi, int f) {
@@ -862,18 +861,19 @@ namespace osucat {
 			query += to_string(SteamId) + ",1," + to_string(VacCount) + "," + to_string(GameCount) + ",";
 			if (ReceiveUserId == EOF) { query += "\"null\","; }
 			else { query += "\"" + std::to_string(ReceiveUserId) + "\","; }
-			if (ReceiveGroupId == EOF) { query += "\"null\")"; }
+			if (ReceiveGroupId == EOF) { query += "\"null\","; }
 			else { query += "\"" + std::to_string(ReceiveGroupId) + "\","; }
-			query += to_string(time(NULL)) + "\")";
+			query += to_string(time(NULL)) + ")";
 			try { this->Insert(query); }
-			catch (osucat::database_exception) {
+			catch (osucat::database_exception &ex) {
+				std::cout << ex.Info() << std::endl;
 				try {
 					this->Update("UPDATE `steam_ban_listen` SET VACBanCount=" + to_string(VacCount) +
 						",GameBanCount=" + to_string(GameCount) +
 						",ListenTime=" + to_string(time(NULL)) +
 						" WHERE SteamId=" + to_string(SteamId));
 				}
-				catch (osucat::database_exception) {}
+				catch (osucat::database_exception &ex) { std::cout << ex.Info() << std::endl; }
 				return false;
 			}
 			return true;

@@ -2775,9 +2775,9 @@ namespace osucat {
 			dl.push_back(DrawableRoundRectangle(0, 0, 1200, 350, 20, 20));
 			coverRoundrect.draw(dl);
 			coverRoundrect.composite(cover, 0, 0, InCompositeOp);
-			coverRoundrect.quality(100);
+			//coverRoundrect.quality(100);
 			string filepath =
-				".\\data\\images\\osucat\\custom\\banner_verify\\" + to_string(UserID) + ".jpg";
+				".\\data\\images\\osucat\\custom\\banner_verify\\" + to_string(UserID) + ".png";
 			coverRoundrect.write(filepath);
 			//baiduaip::imageBase64(filepath);
 			cqhttp_api::send_message(tar, 已上传待审核提示);
@@ -3022,12 +3022,12 @@ namespace osucat {
 		static void adoptbanner_v1(const Target tar) {
 			string UserID = tar.message.substr(11);
 			utils::string_trim(UserID);
-			string picPath = ".\\data\\images\\osucat\\custom\\banner_verify\\" + UserID + ".jpg";
+			string picPath = ".\\data\\images\\osucat\\custom\\banner_verify\\" + UserID + ".png";
 			if (utils::fileExist(picPath) == true) {
 				if (utils::copyFile(
 					".\\data\\images\\osucat\\custom\\banner_verify\\" + UserID
-					+ ".jpg",
-					"./work/v1_cover/" + UserID + ".jpg")
+					+ ".png",
+					"./work/v1_cover/" + UserID + ".png")
 					== true) {
 					DeleteFileA(picPath.c_str());
 					Database db;
@@ -3252,8 +3252,8 @@ namespace osucat {
 				bi.description = tmp[3];
 				Database db;
 				db.Connect();
-				int id = { 0 };
-				if (db.osu_setNewBadge(bi, &id)) {
+				int id = db.osu_setNewBadge(bi);
+				if (id != -1) {
 					string picPath;
 					picPath = utils::GetMiddleText(cmd, "[CQ:image,file=", ",url");
 					picPath = picPath.substr(picPath.find(',') + 6);

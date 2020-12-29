@@ -43,7 +43,7 @@ namespace steamcat {
 			string path = to_string(OC_ROOT_PATH) + "\\data\\images\\osucat\\" + radstr + ".png";
 			if (us.avatarfull != "null") {
 				osucat::NetConnection::DownloadFile(us.avatarfull, path);
-				returnmsg += u8"[CQ:image,file=osucat\\" + radstr + ".png]" + "\n";
+				//returnmsg += u8"[CQ:image,file=osucat\\" + radstr + ".png]" + "\n";
 			}
 			if (utils::forbiddenWordsLibrary(us.personaname)) {
 				returnmsg += u8"用户名：*违禁词屏蔽*";
@@ -101,7 +101,7 @@ namespace steamcat {
 			string path = to_string(OC_ROOT_PATH) + "\\data\\images\\osucat\\" + radstr + ".png";
 			if (us.avatarfull != "null") {
 				osucat::NetConnection::DownloadFile(us.avatarfull, path);
-				returnmsg += u8"[CQ:image,file=osucat\\" + radstr + ".png]" + "\n";
+				//returnmsg += u8"[CQ:image,file=osucat\\" + radstr + ".png]" + "\n";
 			}
 			if (VACorGameBan) {
 				returnmsg += u8"查询到一项新的VAC封禁 详细信息如下：";
@@ -163,7 +163,7 @@ namespace steamcat {
 			string path = to_string(OC_ROOT_PATH) + "\\data\\images\\osucat\\" + radstr + ".png";
 			if (us.avatarfull != "null") {
 				osucat::NetConnection::DownloadFile(us.avatarfull, path);
-				returnmsg += u8"[CQ:image,file=osucat\\" + radstr + ".png]" + "\n";
+				//returnmsg += u8"[CQ:image,file=osucat\\" + radstr + ".png]" + "\n";
 			}
 			if (utils::forbiddenWordsLibrary(us.personaname)) {
 				returnmsg += u8"用户名：*违禁词屏蔽*";
@@ -242,9 +242,15 @@ namespace steamcat {
 				utils::string_replace(t, "/", "");
 				UserBanStats ubs = { 0 };
 				if (ban_check(stoll(t), &ubs)) {
-					UserInfo us = get_user_status(stoll(t));
-					send_message(tar, checkrtnmsg(us, ubs));
-					return;
+					try {
+						UserInfo us = get_user_status(stoll(t));
+						send_message(tar, checkrtnmsg(us, ubs));
+						return;
+					}
+					catch (std::exception) {
+						send_message(tar, u8"提供的链接有误");
+						return;
+					}
 				}
 				else { send_message(tar, u8"未找到此用户"); return; }
 			}
@@ -291,7 +297,15 @@ namespace steamcat {
 			else if (tmp.find("steamcommunity.com/profiles/") != string::npos) {
 				string t = tmp.substr(tmp.find("/profiles/") + 10);
 				utils::string_replace(t, "/", "");
-				if (ban_check(stoll(t), &ubs)) {
+				int ttt;
+				try {
+					ttt = stoll(t);
+				}
+				catch (std::exception) {
+					send_message(tar, u8"提供的链接有误");
+					return;
+				}
+				if (ban_check(ttt, &ubs)) {
 					steamid = stoll(t);
 				}
 				else { send_message(tar, u8"未找到此用户"); return; }

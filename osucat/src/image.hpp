@@ -118,8 +118,8 @@ namespace osucat {
 		Info.density(Point(300, 300)); //Í¼Ïñ·Ö±æÂÊ
 		TypeMetric metric;
 
-		bool isCoverExist = cqhttp_api::utils::fileExist("./work/v1_cover/" + to_string(data.user_info.user_id) + ".jpg");
-		sprintf_s(path_temp, 512, "./work/v1_cover/%lld.jpg", data.user_info.user_id);
+		bool isCoverExist = cqhttp_api::utils::fileExist("./work/v1_cover/" + to_string(data.user_info.user_id) + ".png");
+		sprintf_s(path_temp, 512, "./work/v1_cover/%lld.png", data.user_info.user_id);
 		// cover
 		if (isCoverExist == false) {
 			std::string coverLink = NetConnection::GetBannerLink(data.user_info.user_id);
@@ -140,11 +140,11 @@ namespace osucat {
 			dl.push_back(DrawableRoundRectangle(0, 0, 1200, 350, 20, 20));
 			coverRoundrect.draw(dl);
 			coverRoundrect.composite(cover, 0, 0, InCompositeOp);
-			coverRoundrect.quality(100);
-			coverRoundrect.write("./work/v1_cover/" + to_string(data.user_info.user_id) + ".jpg");
+			//coverRoundrect.quality(100);
+			coverRoundrect.write("./work/v1_cover/" + to_string(data.user_info.user_id) + ".png");
 			DeleteFileA(("./work/v1_cover/" + to_string(data.user_info.user_id) + "_temp.jpg").c_str());
 		}
-		Image Cover("./work/v1_cover/" + to_string(data.user_info.user_id) + ".jpg");
+		Image Cover("./work/v1_cover/" + to_string(data.user_info.user_id) + ".png");
 		Info.composite(Cover, 0, 0, OverCompositeOp);
 		// custom panel
 		if (cqhttp_api::utils::fileExist("./work/v1_infopanel/" + to_string(data.user_info.user_id) + ".png") == true) {
@@ -457,9 +457,9 @@ namespace osucat {
 			Info.composite(Badge, 272, 152, OverCompositeOp);
 			Info.draw(dl);
 		}
-		Info.quality(100);
+		//Info.quality(100);
 		char file[512];
-		sprintf_s(file, "%s%s.jpg", cqhttp_api::utils::rand_str().c_str(), to_string(data.user_info.user_id).c_str());
+		sprintf_s(file, "%s%s.png", cqhttp_api::utils::rand_str().c_str(), to_string(data.user_info.user_id).c_str());
 		Info.write(cqhttp_api::to_string(OC_ROOT_PATH) + "\\data\\images\\osucat\\" + file);
 		return file;
 	}
