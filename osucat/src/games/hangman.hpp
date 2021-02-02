@@ -1256,26 +1256,40 @@ public:
 		string out = "";
 		osucat::Database db;
 		db.Connect();
-		json j = db.Select("SELECT score, guess_history, word_str FROM game_hangman_history where player_id = " + to_string(tar.user_id));
+		json j = db.Select("SELECT score, guess_history, word_str, mods FROM game_hangman_history where player_id = " + to_string(tar.user_id));
 		
 		double max_qq = 0, qq = 0, score = 0;
 		const double lambda = 0.98;
 		double acc = 0, passrate = 0;
 		int playcount = 0, total_guesses = 0, total_hits = 0, total_passes = 0;
+		int mods;
 		for (int i = 0; i < j.size(); i++) {
 			score = stod(j[i]["score"].get<std::string>());
+			mods = stoi(j[i]["mods"].get<std::string>());
 			qq = qq * lambda + score;
 			std::string word_str = j[i]["word_str"].get<std::string>();
 			std::string guess_history = j[i]["guess_history"].get<std::string>();
+
+			bool passed = true;
+			for (int k = 0; k < word_str.length(); k++) {
+				if (guess_history.find(word_str) == guess_history.npos) {
+					passed = false;
+					break;
+				}
+			}
+
+			if (mods & HANGMAN_MOD_E) guess_history = guess_history.substr(1); // remove the hint by ez
+
 			for (int k = 0; k < guess_history.length(); k++) {
 				if (word_str.find(guess_history[k]) != word_str.npos) {
 					total_hits++;
 				}
 			}
+
 			total_guesses += guess_history.length();
 			if (qq > max_qq) max_qq = qq;
 			playcount++;
-			if (score > 0.01) total_passes++;
+			if (passed) total_passes++;
 		}
 		if (total_guesses > 0) acc = (double) total_hits / (double) total_guesses;
 		if (playcount > 0) passrate = (double)total_passes / (double)playcount;
