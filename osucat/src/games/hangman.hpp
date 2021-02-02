@@ -1272,7 +1272,7 @@ public:
 
 			bool passed = true;
 			for (int k = 0; k < word_str.length(); k++) {
-				if (guess_history.find(word_str) == guess_history.npos) {
+				if (guess_history.find(word_str[k]) == guess_history.npos) {
 					passed = false;
 					break;
 				}
