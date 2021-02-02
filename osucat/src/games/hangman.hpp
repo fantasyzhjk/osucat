@@ -1231,7 +1231,7 @@ public:
 	string endGame() {
 		string output = "";
 		if (HP <= 0) {
-			output = u8"输掉啦~" + cuteEmoji(CuteEmojiType::Sad) + "\n不过你仍然获得了" +  std::to_string(scoring(word, guess_history, mods)) + u8"分" + "\n" + this->getAnswer();
+			output = u8"输掉啦~" + cuteEmoji(CuteEmojiType::Sad) + u8"\n不过你仍然获得了" +  std::to_string(scoring(word, guess_history, mods)) + u8"分" + "\n" + this->getAnswer();
 			output += leaveRoom(0);
 		}
 		else {
@@ -1241,7 +1241,7 @@ public:
 		return output;
 	}
 	string giveUp() {
-		string output = getAnswer() + u8"\n由于你放弃了，分数只有" + std::to_string(scoring(word, guess_history, mods)) + "哦~";
+		string output = getAnswer() + u8"\n由于你放弃了，分数只有" + std::to_string(scoring(word, guess_history, mods)) + u8"哦~";
 		output += leaveRoom(scoring(word, guess_history, mods));
 		return output;
 	}
