@@ -6,6 +6,8 @@
 #define HANGMAN_MOD_P	0x08
 #define HANGMAN_MOD_I	0x10
 #define HANGMAN_EXPIRATION_TIME	3600
+#define HANGMAN_WORD_LIST 5000
+#define HANGMAN_INITIAL_HP 7
 
 static enum CuteEmojiType { Happy, Sad };
 static string cuteEmoji(CuteEmojiType type) {
@@ -46,7 +48,7 @@ private:
 				list += word.str[i];
 				if (i != 1) list_E += word.str[i];
 			}
-			/*if (list_history.find(word.str[i]) == list_history.npos && guess_history.find(word.str[i]) != guess_history.npos) {
+			if (list_history.find(word.str[i]) == list_history.npos && guess_history.find(word.str[i]) != guess_history.npos) {
 				list_history += word.str[i];
 				if (i != 1) list_historyE += word.str[i];
 			}//考虑Fail计分时可能用上的代码*/
@@ -56,19 +58,29 @@ private:
 		int miss_count = guess_history.length() - d;
 		double pp;
 		double extra = 0;
-		if (uncompleted_play) return 0; //暂不考虑Fail计分
 		if (mods & HANGMAN_MOD_E) {
-			pp = -57.0 * log(subStringSum(list_E, "", d - 1 + miss_count)) / d;
+			if (uncompleted_play)
+				pp = 0.75 * -57.0 * log(subStringSum(list_historyE, "", d - 1 + HANGMAN_INITIAL_HP + 1)) / d;
+			else
+				pp = -57.0 * log(subStringSum(list_E, "", d - 1 + miss_count)) / d;
+		} else {
+			if (uncompleted_play) 
+				pp = 0.75 * -57.0 * log(subStringSum(list_history, "", d + HANGMAN_INITIAL_HP)) / d;
+			else
+				pp = -57.0 * log(subStringSum(list, "", d + miss_count)) / d;
 		}
-		else {
-			pp = -57.0 * log(subStringSum(list, "", d + miss_count)) / d;
+		if (mods & HANGMAN_MOD_H) {
+			pp *= 1.12; extra += 4;
 		}
-		if (mods & HANGMAN_MOD_H) pp *= 1.12;
-		if (mods & HANGMAN_MOD_D) pp *= 1.18;
-		if (mods & HANGMAN_MOD_I) extra += 4;
+		if (mods & HANGMAN_MOD_D) {
+			pp *= 1.18; extra += 6;
+		}
+		if (mods & HANGMAN_MOD_I) {
+			extra += 5;
+		}
 		double diff = -7.0 * log(1 - exp(-7000.1 * word.freq / H));
-		if (uncompleted_play == false) pp += diff;
-		pp += extra;
+		if (!uncompleted_play) pp += diff;
+		if (!uncompleted_play) pp += extra;
 		return pp;
 	}
 	static double subStringSum(string list, string S, int n) {
@@ -87,7 +99,7 @@ private:
 			return subStringSum(tail, head + S, n) + subStringSum(tail, S, n);
 		}
 	}
-	static Word wordLibrary(WordLibOperation operation, int parameter) {
+	static Word wordLibrary(WordLibOperation operation, int parameter) { // removed: dost, adv, les, spake
 		static string word_lib[number_of_words] = { "the", "and", "that", "was", "his", "with", "for", "had", "you", "not", "her", "which", "have", "from", "this", "him", "but", "all", "she", "they",
 "were", "are", "one", "their", "said", "them", "who", "would", "been", "will", "when", "there", "more", "out", "into", "any", "your", "what", "has", "man",
 "could", "other", "than", "our", "some", "very", "time", "upon", "about", "may", "its", "only", "now", "like", "little", "then", "can", "should", "made", "did",
@@ -210,7 +222,7 @@ private:
 "prayers", "fever", "selected", "daughters", "treat", "warning", "flew", "speaks", "developed", "impulse", "slipped", "ours", "mistaken", "damages", "ambition", "resumed", "christmas", "yield", "ideal", "schools",
 "confirmed", "descended", "rush", "falls", "deny", "calculated", "correct", "perform", "somehow", "accordingly", "stayed", "acquired", "counsel", "distress", "sins", "notion", "discussion", "constitution", "anne", "hundreds",
 "instrument", "firmly", "actions", "steady", "remarks", "empire", "elements", "idle", "pen", "entering", "online", "africa", "permit", "tide", "vol", "leaned", "college", "maintain", "sovereign", "tail",
-"generation", "crowded", "fears", "nights", "limitation", "tied", "horrible", "cat", "displaying", "port", "male", "experienced", "opposed", "treaty", "contents", "rested", "mode", "poured", "les", "occur",
+"generation", "crowded", "fears", "nights", "limitation", "tied", "horrible", "cat", "displaying", "port", "male", "experienced", "opposed", "treaty", "contents", "rested", "mode", "poured", "-les", "occur",
 "seeking", "practically", "abandoned", "reports", "eleven", "sank", "begins", "founded", "brings", "trace", "instinct", "collected", "scotland", "characteristic", "chose", "cheerful", "tribe", "costs", "threatened", "arrangement",
 "western", "sang", "beings", "sam", "pressure", "politics", "sorts", "shelter", "rude", "scientific", "revealed", "winds", "riding", "scenes", "shake", "industry", "claims", "merit", "profession", "lamp",
 "interview", "territory", "sleeping", "sex", "coffee", "devotion", "thereof", "creation", "trail", "romans", "supported", "requires", "fathers", "prospect", "obey", "alexander", "shone", "operation", "northern", "nurse",
@@ -273,15 +285,15 @@ private:
 "statue", "contract", "luxury", "artillery", "doubts", "saving", "fro", "string", "combination", "awakened", "faded", "arrest", "protected", "temperature", "strict", "contented", "professional", "intent", "injured", "neighborhood",
 "abundance", "smoking", "yourselves", "medical", "garrison", "likes", "corps", "heroic", "inform", "retained", "agitation", "nobles", "prominent", "institution", "judged", "embrace", "wheels", "closing", "damaged", "pack",
 "affections", "eldest", "anguish", "surrounding", "obviously", "strictly", "capture", "drops", "inquire", "ample", "remainder", "justly", "recollection", "deer", "answers", "bedroom", "purely", "bush", "plunged", "thyself",
-"joint", "refer", "expecting", "madam", "railroad", "spake", "respecting", "columns", "weep", "identify", "discharge", "bench", "heir", "oak", "rescue", "limit", "unpleasant", "anxiously", "innocence", "awoke",
+"joint", "refer", "expecting", "madam", "railroad", "-spake", "respecting", "columns", "weep", "identify", "discharge", "bench", "heir", "oak", "rescue", "limit", "unpleasant", "anxiously", "innocence", "awoke",
 "expectation", "incomplete", "program", "reserved", "secretly", "invention", "faults", "disagreeable", "piano", "defeated", "charms", "purse", "persuade", "deprived", "electric", "endless", "interval", "chase", "heroes", "invisible",
 "occupy", "gown", "cruelty", "lock", "lowest", "hesitation", "withdrew", "proposal", "destiny", "recognised", "commons", "foul", "loaded", "amidst", "titles", "ancestors", "types", "commanding", "madness", "happily",
 "assigned", "declined", "temptation", "subsequent", "jewels", "breathed", "willingly", "youthful", "bells", "spectacle", "uneasy", "shine", "formidable", "stately", "machinery", "fragments", "rushing", "attractive", "product", "economic",
-"sickness", "uses", "dashed", "engine", "ashore", "dates", "theirs", "adv", "clasped", "international", "leather", "spared", "crushed", "interfere", "subtle", "waved", "slope", "floating", "worry", "effected",
+"sickness", "uses", "dashed", "engine", "ashore", "dates", "theirs", "-adv", "clasped", "international", "leather", "spared", "crushed", "interfere", "subtle", "waved", "slope", "floating", "worry", "effected",
 "passengers", "violently", "donation", "steamer", "witnesses", "specified", "learnt", "stores", "designed", "guessed", "roger", "timber", "talents", "heed", "jackson", "murdered", "vivid", "woe", "calculate", "killing",
 "laura", "savages", "wasted", "trifle", "funny", "pockets", "philosopher", "insult", "den", "representation", "incapable", "eloquence", "dine", "temples", "ann", "sensitive", "robin", "appetite", "wishing", "picturesque",
 "douglas", "courtesy", "flowing", "remembrance", "lawyers", "sphere", "murmur", "elegant", "honourable", "stopping", "guilt", "welfare", "avoided", "fishing", "perish", "sober", "steal", "delicious", "infant", "lip",
-"norman", "offended", "dost", "memories", "wheat", "japanese", "humor", "exhibited", "encounter", "footsteps", "marquis", "smiles", "amiable", "twilight", "arrows", "consisting", "park", "retire", "economy", "sufferings",
+"norman", "offended", "-dost", "memories", "wheat", "japanese", "humor", "exhibited", "encounter", "footsteps", "marquis", "smiles", "amiable", "twilight", "arrows", "consisting", "park", "retire", "economy", "sufferings",
 "secrets", "halted", "govern", "favourable", "colors", "translated", "stretch", "formation", "immortal", "gallery", "parallel", "lean", "tempted", "frontier", "continent", "knock", "impatience", "unity", "dealing", "prohibition",
 "decent", "fiery", "images", "tie", "punished", "submitted", "julia", "albert", "rejoined", "speedily", "consented", "major", "preliminary", "cell", "void", "placing", "prudence", "egg", "amazement", "border",
 "artificial", "hereafter", "fanny", "crimes", "breathe", "exempt", "anchor", "chicago", "sits", "purchased", "eminent", "neighbors", "glowing", "sunlight", "examples", "exercised", "wealthy", "seeming", "bonaparte", "shouting",
@@ -1095,10 +1107,16 @@ private:
 			new_word.index = utils::randomNum(0, parameter - 1);
 			new_word.str = word_lib[new_word.index];
 			new_word.freq = word_lib_frequency[new_word.index];
+			while (new_word.str[0] == '-') {
+				new_word.index++;
+				new_word.str = word_lib[new_word.index];
+				new_word.freq = word_lib_frequency[new_word.index];
+			}// 去掉被移除的词汇
 			return new_word;
 		case WordLibOperation::FindWordByIndex:
 			new_word.index = parameter;
 			new_word.str = word_lib[parameter];
+			if (new_word.str[0] == '-') new_word.str = new_word.str.substr(1); // 去掉减号
 			new_word.freq = word_lib_frequency[parameter];
 			return new_word;
 		}
@@ -1106,7 +1124,7 @@ private:
 	}
 	void newWord() {
 		mods = 0;
-		word = wordLibrary(WordLibOperation::GenerateRandomWord, 4000);
+		word = wordLibrary(WordLibOperation::GenerateRandomWord, HANGMAN_WORD_LIST);
 		guess_history = "";
 		HP = 7;
 	}
@@ -1137,7 +1155,7 @@ public:
 	string guess(char input) {
 		if (input <= 'Z' && input >= 'A') input += 'a' - 'A';
 		if (input > 'z' || input < 'a') return u8"你输入的不是字母" + cuteEmoji(CuteEmojiType::Sad);
-		if (guess_history.find(input) != guess_history.npos) return u8"你已经猜过这个字母了！" + cuteEmoji(CuteEmojiType::Happy);
+		if (guess_history.find(input) != guess_history.npos) return u8"你已经猜过这个字母了！" + cuteEmoji(CuteEmojiType::Happy);// +"\n" + this->getStatus();
 		guess_history += input;
 		if (word.str.find(input) != word.str.npos) {
 			return this->getStatus();
@@ -1197,7 +1215,7 @@ public:
 			}
 		}
 		output += u8"\n" + mods_display + "HP:" + std::to_string(HP);
-		if (guess_history != "") output += u8" 已用字母:" + guess_history;
+		if (guess_history != "") output += u8" 已用:" + guess_history;
 		return output;
 	}
 	string getAnswer() {
@@ -1213,7 +1231,7 @@ public:
 	string endGame() {
 		string output = "";
 		if (HP <= 0) {
-			output = u8"输掉啦~" + cuteEmoji(CuteEmojiType::Sad) + "\n" + this->getAnswer();
+			output = u8"输掉啦~" + cuteEmoji(CuteEmojiType::Sad) + "\n不过你仍然获得了" +  std::to_string(scoring(word, guess_history, mods)) + u8"分" + "\n" + this->getAnswer();
 			output += leaveRoom(0);
 		}
 		else {
@@ -1223,8 +1241,8 @@ public:
 		return output;
 	}
 	string giveUp() {
-		string output = getAnswer() + u8"\n由于你放弃了，分数为0哦~";
-		output += leaveRoom(0);
+		string output = getAnswer() + u8"\n由于你放弃了，分数只有" + std::to_string(scoring(word, guess_history, mods)) + "哦~";
+		output += leaveRoom(scoring(word, guess_history, mods));
 		return output;
 	}
 };
@@ -1261,7 +1279,8 @@ public:
 		}
 		if (total_guesses > 0) acc = (double) total_hits / (double) total_guesses;
 		if (playcount > 0) passrate = (double)total_passes / (double)playcount;
-		//max_qq *= 1 - lambda;
+		
+		max_qq *= (1 - lambda) * 100;
 
 		db.Update("UPDATE game_hangman_ranking SET qqpoint = " + std::to_string(max_qq) + ", acc = " + std::to_string(acc) + ", passrate = " + std::to_string(passrate) + ", playcount = " + std::to_string(playcount) + " where player_id = " + std::to_string(tar.user_id));
 		json jranking = db.Select("Select qqpoint, player_id, qqrank from game_hangman_ranking ORDER BY qqpoint DESC");
@@ -1395,7 +1414,7 @@ public:
 	static std::string gameStatus() {
 		std::string out = u8"房间列表：\n";
 		for (int i = 0; i < lobby_size; i++) {
-			out += std::to_string(i) + u8":" + std::to_string(hangman_list[i].player_id) + u8"\n" + hangman_list[i].getStatus() + u8"\n";
+			if (hangman_list[i].player_id != 0) out += std::to_string(i) + u8":" + std::to_string(hangman_list[i].player_id) + u8"\n" + hangman_list[i].getStatus() + u8"\n";
 		}
 		return out;
 	}
