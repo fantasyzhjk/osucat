@@ -60,12 +60,12 @@ private:
 		double extra = 0;
 		if (mods & HANGMAN_MOD_E) {
 			if (uncompleted_play)
-				pp = 0.75 * -57.0 * log(subStringSum(list_historyE, "", d - 1 + HANGMAN_INITIAL_HP + 1)) / d;
+				pp = -57.0 * log(subStringSum(list_historyE, "", d - 1 + HANGMAN_INITIAL_HP + 1)) / d;
 			else
 				pp = -57.0 * log(subStringSum(list_E, "", d - 1 + miss_count)) / d;
 		} else {
 			if (uncompleted_play) 
-				pp = 0.75 * -57.0 * log(subStringSum(list_history, "", d + HANGMAN_INITIAL_HP)) / d;
+				pp = -57.0 * log(subStringSum(list_history, "", d + HANGMAN_INITIAL_HP)) / d;
 			else
 				pp = -57.0 * log(subStringSum(list, "", d + miss_count)) / d;
 		}
@@ -1232,7 +1232,7 @@ public:
 		string output = "";
 		if (HP <= 0) {
 			output = u8"输掉啦~" + cuteEmoji(CuteEmojiType::Sad) + u8"\n不过你仍然获得了" +  std::to_string(scoring(word, guess_history, mods)) + u8"分" + "\n" + this->getAnswer();
-			output += leaveRoom(0);
+			output += leaveRoom(scoring(word, guess_history, mods));
 		}
 		else {
 			output = u8"你猜对啦~好厉害！猫猫给你打" + std::to_string(scoring(word, guess_history, mods)) + u8"分" + cuteEmoji(CuteEmojiType::Happy);
@@ -1421,7 +1421,9 @@ public:
 			return u8"你还没有在游戏中呢" + cuteEmoji(CuteEmojiType::Happy);
 		}
 		else {
-			return hangman_list[position].giveUp() + updatePlayer(tar);
+			string out = hangman_list[position].giveUp();
+			out += updatePlayer(tar);
+			return out; 
 		}
 	}
 	//获得房间状态和列表
