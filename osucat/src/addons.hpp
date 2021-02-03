@@ -437,7 +437,7 @@ namespace osucat::addons {
 					send_message(tar, HangmanGame::showPlayerData(tar));
 					return;
 				}
-				if (_stricmp(tar.message.substr(0, 27).c_str(), "recalculateallhangmanscores") == 0) {
+				if (_stricmp(tar.message.substr(0, 35).c_str(), "warning:recalculateallhangmanscores") == 0) {
 					for (int i = 0; i < adminlist.size(); i++) {
 						if (tar.user_id == adminlist[i].user_id) {
 							send_message(tar, HangmanGame::recalculateAllScores());
