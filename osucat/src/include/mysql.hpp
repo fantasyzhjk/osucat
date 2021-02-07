@@ -865,7 +865,7 @@ namespace osucat {
 			else { query += "\"" + std::to_string(ReceiveGroupId) + "\","; }
 			query += to_string(time(NULL)) + ")";
 			try { this->Insert(query); }
-			catch (osucat::database_exception &ex) {
+			catch (osucat::database_exception& ex) {
 				std::cout << ex.Info() << std::endl;
 				try {
 					this->Update("UPDATE `steam_ban_listen` SET VACBanCount=" + to_string(VacCount) +
@@ -873,7 +873,7 @@ namespace osucat {
 						",ListenTime=" + to_string(time(NULL)) +
 						" WHERE SteamId=" + to_string(SteamId));
 				}
-				catch (osucat::database_exception &ex) { std::cout << ex.Info() << std::endl; }
+				catch (osucat::database_exception& ex) { std::cout << ex.Info() << std::endl; }
 				return false;
 			}
 			return true;
@@ -912,6 +912,33 @@ namespace osucat {
 				return true;
 			}
 		}
+
+
+		int osu_get_event_status(int64_t uid) {
+			try { return std::stoi(this->Select("select `event_mode` from `osu_eventsettings` where uid=" + std::to_string(uid))[0]["event_mode"].get<std::string>()); }
+			catch (osucat::database_exception) { return 0; }
+		}
+
+		bool osu_set_event_status(int64_t uid, int status) {
+			try {
+				std::stoi(this->Select("select `event_mode` from `osu_eventsettings` where uid=" + std::to_string(uid))[0]["event_mode"].get<std::string>());
+				this->Update("update `osu_eventsettings` set `event_mode`=" + to_string(status) + " where uid=" + to_string(uid));
+				return true;
+			}
+			catch (osucat::database_exception) {
+				this->Insert("insert into `osu_eventsettings` (uid,event_mode) values (" + to_string(uid) + "," + to_string(status) + ")");
+				return true;
+			}
+			return false;
+		}
+
+
+
+
+
+
+
+
 
 		void Close() {
 			if (this->conn.net.vio != NULL) mysql_close(&this->conn);

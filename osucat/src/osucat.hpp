@@ -403,6 +403,8 @@ namespace osucat {
 			////
 			upd.user_info.mode = gamemode;
 			previousUserInfo.mode = gamemode;
+			//event info
+			bool eventsettings = db.osu_get_event_status(upd.user_info.user_id);
 			string fileStr;
 			upd.badgeid = db.osu_getshownbadges(upd.user_info.user_id); //获取显示勋章
 			if (db.osu_getqq(upd.user_info.user_id) != 0) {
@@ -414,20 +416,20 @@ namespace osucat {
 					}
 					else if (dtmp == 0) {
 						previousUserInfo.days_before = days;
-						fileStr = "osucat\\" + infoPic_v1(upd, previousUserInfo, true);
+						fileStr = "osucat\\" + infoPic_v1(upd, previousUserInfo, true, true, eventsettings);
 					}
 					else {
 						previousUserInfo.days_before = dtmp;
-						fileStr = "osucat\\" + infoPic_v1(upd, previousUserInfo, true, false);
+						fileStr = "osucat\\" + infoPic_v1(upd, previousUserInfo, true, false, eventsettings);
 					}
 				}
 				else {
 					try {
 						db.osu_GetUserData(upd.user_info.user_id, 0, &previousUserInfo);
-						fileStr = "osucat\\" + infoPic_v1(upd, previousUserInfo, true);
+						fileStr = "osucat\\" + infoPic_v1(upd, previousUserInfo, true, true, eventsettings);
 					}
 					catch (osucat::database_exception) {
-						fileStr = "osucat\\" + infoPic_v1(upd, upd.user_info, true);
+						fileStr = "osucat\\" + infoPic_v1(upd, upd.user_info, true, true, eventsettings);
 					}
 				}
 			}
@@ -3013,6 +3015,31 @@ namespace osucat {
 			db.Connect();
 			send_message(tar, u8"猫猫从0.4版本开始，主要功能至今一共被调用了 " + to_string(db.Getcallcount()) + u8" 次。");
 		}
+
+		static void setevent(const Target tar) {
+			Database db;
+			db.Connect();
+			db.addcallcount();
+			int64_t uid = db.osu_getuserid(tar.user_id);
+			if (uid == 0) {
+				send_message(tar, u8"还未绑定osu!账户"); return;
+			}
+			string cmd = utils::cqunescape(tar.message.substr(8));
+			utils::string_trim(cmd);
+			if (cmd == "on") {
+				db.osu_set_event_status(uid, 1);
+				send_message(tar, u8"已开启");
+				return;
+			}
+			else if (cmd == "off") {
+				db.osu_set_event_status(uid, 0);
+				send_message(tar, u8"已关闭");
+				return;
+			}
+			else {
+				send_message(tar, u8"无效参数");
+			}
+		}
 	};
 
 	class Admin {
@@ -3938,6 +3965,9 @@ namespace osucat {
 						return true;
 					}*/
 					if (_stricmp(tar.message.substr(0, 4).c_str(), "bpme") == 0) { return; }
+					if (_stricmp(tar.message.substr(0, 8).c_str(), "setevent") == 0) {
+						Main::setevent(tar); return;
+					}
 					if (_stricmp(tar.message.substr(0, 4).c_str(), "bpht") == 0) {
 						Main::bphead_tail(tar); return;
 					}

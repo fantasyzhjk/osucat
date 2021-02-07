@@ -109,7 +109,7 @@ namespace osucat {
 		int badgeid = -1;
 	};
 
-	string infoPic_v1(const UserPanelData& data, const osu_api::v1::user_info& previoustUserInfo, bool isBonded = false, bool isDataOfDayAvaiavle = true) {
+	string infoPic_v1(const UserPanelData& data, const osu_api::v1::user_info& previoustUserInfo, bool isBonded = false, bool isDataOfDayAvaiavle = true, bool eventmode = false) {
 		char path_temp[512];
 		char temp[1024];
 		Image Info(Geometry(1200, 857), "none");
@@ -174,6 +174,11 @@ namespace osucat {
 			avttemp.draw(dl);
 			Image ava("./work/avatar/" + to_string(data.user_info.user_id) + ".png");
 			ava.resize(Geometry(190, 190));
+			if (eventmode) {
+				Image avaeve("./work/avatar_event_layer.png");
+				avaeve.resize(Geometry(190, 190));
+				ava.composite(avaeve, 0, 0, OverCompositeOp);
+			}	
 			avttemp.composite(ava, 0, 0, InCompositeOp);
 			Info.composite(avttemp, 39, 55, OverCompositeOp);
 		}
