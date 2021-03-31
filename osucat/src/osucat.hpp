@@ -3172,13 +3172,13 @@ namespace osucat {
 				UserID = tmp.substr(0, tmp.find('#'));
 				Content = tmp.substr(tmp.find("#") + 1);
 				if (Content.length() < 1) {
-					Content = "未提供详情。";
+					Content = u8"未提供详情。";
 				}
 			}
 			else {
 				UserID = cmd;
 				utils::string_trim(UserID);
-				Content = "未提供详情。";
+				Content = u8"未提供详情。";
 			}
 			Database db;
 			db.Connect();
@@ -3191,13 +3191,13 @@ namespace osucat {
 				catch (exception) {
 				}
 				try {
-					DeleteFileA(("./work/v1_infopanel/" + UserID + ".jpg").c_str());
+					DeleteFileA(("./work/v1_infopanel/" + UserID + ".png").c_str());
 				}
 				catch (exception) {
 				}
 				send_private_message(QQ, u8"你的个人资料已被重置，详情：" + Content);
-				send_message(tar, "ID：" + UserID + u8" ，已成功通知用户他的个人资料已被重置。详情：" + Content);
-				if (tar.group_id != management_groupid) { send_group_message(management_groupid, "ID：" + UserID + u8" ，已成功通知用户他的个人资料已被重置。详情：" + Content); }
+				send_message(tar, u8"ID：" + UserID + u8" ，已成功通知用户他的个人资料已被重置。详情：" + Content);
+				if (tar.group_id != management_groupid) { send_group_message(management_groupid, u8"ID：" + UserID + u8" ，已成功通知用户他的个人资料已被重置。详情：" + Content); }
 			}
 			else {
 				send_message(tar, u8"找不到此用户。");
@@ -3923,10 +3923,6 @@ namespace osucat {
 						if (tar.type == Target::Type::GROUP) { if (db.isGroupEnable(tar.group_id, 2) == 0) return; }
 						Main::rctpp(tar); return;
 					}
-					if (_stricmp(tar.message.substr(0, 3).c_str(), "rct") == 0 || _stricmp(tar.message.substr(0, 2).c_str(), "re") == 0) {
-						if (tar.type == Target::Type::GROUP) { if (db.isGroupEnable(tar.group_id, 3) == 0) return; }
-						Main::recent(tar); return;
-					}
 					if (_stricmp(tar.message.substr(0, 2).c_str(), "pr") == 0) {
 						if (tar.type == Target::Type::GROUP) { if (db.isGroupEnable(tar.group_id, 3) == 0) return; }
 						Main::pass_recent(tar); return;
@@ -4071,6 +4067,10 @@ namespace osucat {
 								Admin::setnewbadge(tar); return;
 							}
 						}
+					}
+					if (_stricmp(tar.message.substr(0, 3).c_str(), "rct") == 0 || _stricmp(tar.message.substr(0, 2).c_str(), "re") == 0) {
+						if (tar.type == Target::Type::GROUP) { if (db.isGroupEnable(tar.group_id, 3) == 0) return; }
+						Main::recent(tar); return;
 					}
 					steamcat::cmdParser::parse(tar, sdr); //steamcat
 					if (tar.type == Target::Type::GROUP) if (db.isGroupEnable(tar.group_id, 4) == 0) return; //拦截娱乐模块

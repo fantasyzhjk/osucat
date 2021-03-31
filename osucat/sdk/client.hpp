@@ -43,6 +43,7 @@ namespace cqhttp_api {
 				thread MultiProcessThread(bind(&Processer, message));
 				MultiProcessThread.detach();
 				});
+			Sleep(100);
 		}
 		cout << u8"已失去连接，正在重试..." << endl;
 	}
