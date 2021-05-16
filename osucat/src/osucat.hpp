@@ -22,7 +22,7 @@ namespace osucat {
 		static void getcallcount(const Target tar) {
 			Database db;
 			db.Connect();
-			send_message(tar, u8"猫猫从0.4版本开始，主要功能至今一共被调用了 " + std::to_string(db.Getcallcount()) + u8" 次。");
+			send_message(tar, u8"猫猫从0.4版本(2020/04/20)开始，主要功能至今一共被调用了 " + std::to_string(db.Getcallcount()) + u8" 次。");
 		}
 
 		static void help(const Target tar) {
@@ -346,7 +346,7 @@ namespace osucat {
 							}
 						}
 						else {
-							if (username.length() > 20) {
+							if (username.length() > 40) {
 								send_message(tar, 所提供的参数超出长度限制);
 								return;
 							}
@@ -379,7 +379,7 @@ namespace osucat {
 				}
 			}
 			else {
-				if (username.length() > 20) {
+				if (username.length() > 40) {
 					send_message(tar, 所提供的参数超出长度限制);
 					return;
 				}
@@ -594,7 +594,7 @@ namespace osucat {
 				}
 			}
 			else {
-				if (username.length() > 20) {
+				if (username.length() > 40) {
 					cqhttp_api::send_message(tar, 所提供的参数超出长度限制);
 					return;
 				}
@@ -856,7 +856,7 @@ namespace osucat {
 				}
 			}
 			else {
-				if (username.length() > 20) {
+				if (username.length() > 40) {
 					cqhttp_api::send_message(tar, 所提供的参数超出长度限制);
 					return;
 				}
@@ -1090,23 +1090,13 @@ namespace osucat {
 					}
 					else if (cmd.find(':') != string::npos && cmd[0] != ':') {
 						bpnum = 1;
-						try {
-							if (cmd.find("at,qq=") != string::npos) {
-								userid = db.osu_getuserid(stoll(utils::GetMiddleText(cmd, "=", "]")));
-								if (userid == 0) {
-									cqhttp_api::send_message(tar, 被查询的用户未绑定osu账号);
-									return;
-								}
-							}
-							else {
-								username = cmd.substr(0, cmd.find(':'));
-							}
-						}
-						catch (std::exception) {
-							username = "%^%^%^!*(^&";
+						userid = db.osu_getuserid(tar.user_id);
+						if (userid == 0) {
+							cqhttp_api::send_message(tar, 用户没有绑定osu账号);
+							return;
 						}
 						try {
-							temp = stoi(cmd.substr(cmd.length() - 1));
+							temp = stoi(cmd.substr(cmd.find(':') - 1));
 							if (temp < 4 && temp > -1) {
 								gamemode = (osu_api::v1::mode)temp;
 							}
@@ -1117,6 +1107,12 @@ namespace osucat {
 						catch (std::exception) {
 							gamemode = (osu_api::v1::mode)temp;
 						}
+						if (utils::isNum(cmd.substr(cmd.find(':') + 1))) {
+							bpnum = stoll(cmd.substr(cmd.find(':') + 1));
+							bpnum > 100 ? bpnum = 100 : bpnum < 1 ? bpnum = 1 : bpnum = bpnum;
+						}
+						else
+							bpnum = 1;
 					}
 				}
 				else {
@@ -1155,7 +1151,7 @@ namespace osucat {
 
 			}
 			else {
-				if (username.length() > 20) {
+				if (username.length() > 40) {
 					cqhttp_api::send_message(tar, 所提供的参数超出长度限制);
 					return;
 				}
@@ -1799,7 +1795,7 @@ namespace osucat {
 				}
 			}
 			else {
-				if (username.length() > 20) {
+				if (username.length() > 40) {
 					"";
 					cqhttp_api::send_message(tar, 所提供的参数超出长度限制);
 					return;
@@ -2210,7 +2206,7 @@ namespace osucat {
 				}
 			}
 			else {
-				if (username.length() > 20) {
+				if (username.length() > 40) {
 					cqhttp_api::send_message(tar, 所提供的参数超出长度限制);
 					return;
 				}
@@ -2277,7 +2273,7 @@ namespace osucat {
 				cqhttp_api::send_message(tar, u8"请提供要对比的玩家ID");
 				return;
 			}
-			if (cmd.length() > 20) {
+			if (cmd.length() > 40) {
 				cqhttp_api::send_message(tar, 所提供的参数超出长度限制);
 				return;
 			}
@@ -2390,7 +2386,7 @@ namespace osucat {
 				}
 			}
 			else {
-				if (username.length() > 20) {
+				if (username.length() > 40) {
 					cqhttp_api::send_message(tar, 所提供的参数超出长度限制);
 					return;
 				}
@@ -2467,7 +2463,7 @@ namespace osucat {
 				}
 			}
 			else {
-				if (username.length() > 20) {
+				if (username.length() > 40) {
 					cqhttp_api::send_message(tar, 所提供的参数超出长度限制);
 					return;
 				}
@@ -2600,7 +2596,7 @@ namespace osucat {
 				}
 			}
 			else {
-				if (username.length() > 20) {
+				if (username.length() > 40) {
 					cqhttp_api::send_message(tar, 所提供的参数超出长度限制);
 					return;
 				}
