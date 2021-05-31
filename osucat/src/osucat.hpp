@@ -1096,7 +1096,7 @@ namespace osucat {
 							return;
 						}
 						try {
-							temp = stoi(cmd.substr(cmd.find(':') - 1));
+							temp = stoi(cmd.substr(cmd.find(':') + 1));
 							if (temp < 4 && temp > -1) {
 								gamemode = (osu_api::v1::mode)temp;
 							}
@@ -1107,8 +1107,8 @@ namespace osucat {
 						catch (std::exception) {
 							gamemode = (osu_api::v1::mode)temp;
 						}
-						if (utils::isNum(cmd.substr(cmd.find(':') + 1))) {
-							bpnum = stoll(cmd.substr(cmd.find(':') + 1));
+						if (utils::isNum(cmd.substr(0, cmd.find(':')))) {
+							bpnum = stoll(cmd.substr(0, cmd.find(':')));
 							bpnum > 100 ? bpnum = 100 : bpnum < 1 ? bpnum = 1 : bpnum = bpnum;
 						}
 						else
