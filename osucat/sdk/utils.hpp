@@ -3848,6 +3848,14 @@ namespace cqhttp_api::utils {
 		std::thread DFH(std::bind(&DelFileHandler, filename, delayTime));
 		DFH.detach();
 	}
+	static std::string random_numofchars(std::string chars, int min, int max) {
+		int a = randomNum(min, max);
+		std::string rtn = u8"";
+		for (int i = 0; i < a; ++i) {
+			rtn = rtn + chars;
+		}
+		return rtn;
+	}
 };
 
 namespace cqhttp_api {

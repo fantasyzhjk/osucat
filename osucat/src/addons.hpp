@@ -250,8 +250,13 @@ namespace osucat::addons {
 				db.writeBottle(driftingBottleDBEvent::WRITEIN, 0, timetmp, tar.user_id, senderinfo.nickname, utils::ocescape(cmd));
 				db.addPickThrowCount(false);
 				char reportMsg[6000];
+				string s_bottle = utils::randomNum(1, 100) > 50 ? +u8"漂流瓶" : +u8"瓶子";
+				Sleep(100);
+				string s_yours = utils::randomNum(1, 100) > 50 ? +u8"你的" : +u8"君の";
+				Sleep(100);
+				string s_sendout = utils::randomNum(1, 100) > 50 ? +u8"漂往远方" : +u8"流向远方";
 				if (cmd.find("[CQ:image") != string::npos) {
-					send_message(tar, u8"你的漂流瓶已经漂往远方....");
+					send_message(tar, s_yours + s_bottle + u8"已经" + s_sendout + utils::random_numofchars(u8".", 3, 8));
 					sprintf_s(reportMsg,
 						"[%s]\n"
 						u8"用户 %s(%lld) 在漂流瓶内上传了图片\n漂流瓶ID: %d\n消息内容如下：\n%s",
@@ -264,7 +269,7 @@ namespace osucat::addons {
 					send_group_message(management_groupid, reportMsg);
 				}
 				else {
-					send_message(tar, u8"你的漂流瓶已经漂往远方....");
+					send_message(tar, s_yours + s_bottle + u8"已经" + s_sendout + utils::random_numofchars(u8".", 3, 8));
 					sprintf_s(reportMsg,
 						"[%s]\n"
 						u8"用户 %s(%lld) 上传了漂流瓶\n漂流瓶ID: %d\n消息内容如下：\n%s",
@@ -281,6 +286,7 @@ namespace osucat::addons {
 				int a = db.getUserBottleRemaining(tar.user_id);
 				if (a > 0) {
 					if (j.size() != 0) {
+						string s_contentis = utils::randomNum(1, 100) > 50 ? +u8"瓶子里的内容是" : +u8"瓶の中身は";
 						db.setBottleRemaining(3, tar.user_id);
 						int tempi = utils::randomNum(0, j.size() - 1);
 						for (int i = 0; i < j.size(); ++i) {
@@ -300,35 +306,49 @@ namespace osucat::addons {
 						db.writeBottle(osucat::addons::driftingBottleDBEvent::ADDCOUNTER, dfb.id, 0, 0, "", "");
 						char tempm[6000];
 						sprintf_s(tempm,
-							u8"这是来自 %s(%lld) 的漂流瓶....\n"
+							u8"这是来自 %s(%lld) 的漂流瓶%s\n"
 							u8"ID:%d 发于 %s\n"
-							u8"内容是....\n%s",
-							dfb.nickname.c_str(), dfb.sender, dfb.id, utils::unixTime2StrChinese(dfb.sendTime).c_str(), dfb.msg.c_str());
+							u8"%s%s\n%s",
+							dfb.nickname.c_str(),
+							dfb.sender, utils::random_numofchars(u8".", 3, 8).c_str(), dfb.id,
+							utils::unixTime2StrChinese(dfb.sendTime).c_str(), s_contentis.c_str(), utils::random_numofchars(u8".", 3, 8).c_str(),
+							dfb.msg.c_str());
 						send_message(tar, tempm);
 						if (db.RemoveBottle(floor((time(NULL) - stoll(j[tempi]["sendtime"].get<std::string>())) / 86400), dfb.id)) {
 							if (dfb.pickcount == 0) {
 								sprintf_s(tempm,
 									u8"你发于 %s\n"
-									u8"的内容为....%s的消息已经被 %s(%lld) 捞起来了....\n",
+									u8"的内容为%s%s的消息已经被 %s(%lld) 捞起来了%s\n",
 									utils::unixTime2StrChinese(dfb.sendTime).c_str(),
-									dfb.msg.c_str(),
-									senderinfo.nickname.c_str(), tar.user_id);
+									utils::random_numofchars(u8".", 3, 8).c_str(), dfb.msg.c_str(),
+									senderinfo.nickname.c_str(), tar.user_id), utils::random_numofchars(u8".", 3, 8).c_str();
 							}
 							else {
 								sprintf_s(tempm,
 									u8"你发于 %s\n"
-									u8"的内容为....%s的消息已经被 %s(%lld) 捞起来了....\n在此之前你的瓶子还被阅读了 %d 次...",
+									u8"的内容为%s%s的消息已经被 %s(%lld) 捞起来了....\n在此之前你的瓶子还被阅读了 %d 次%s",
 									utils::unixTime2StrChinese(dfb.sendTime).c_str(),
-									dfb.msg.c_str(),
-									senderinfo.nickname.c_str(), tar.user_id, dfb.pickcount);
+									utils::random_numofchars(u8".", 3, 8).c_str(), dfb.msg.c_str(),
+									senderinfo.nickname.c_str(), tar.user_id, dfb.pickcount),
+									utils::random_numofchars(u8".", 3, 8).c_str();
 							}
 							Sleep(3000);
 							send_private_message(dfb.sender, tempm);
 						}
 					}
-					else { send_message(tar, u8"还没有人丢过漂流瓶呢..."); }
+					else { 
+						send_message(tar, u8"还没有人丢过漂流瓶呢" + utils::random_numofchars(u8".", 3, 8)); 
+					}
 				}
-				else { send_message(tar, u8"你当前没有捡瓶子的机会了，扔<一个>漂流瓶可以获得<两次>打捞的机会，或每日<首次>使用漂流瓶也可获得<10次>免费打捞的机会~"); }
+				else {
+					vector<string> insufficientchance;
+					insufficientchance.push_back(u8"你当前没有捡瓶子的机会了，扔<一个>漂流瓶可以获得<两次>打捞的机会，或每日<首次>使用漂流瓶也可获得<10次>免费打捞的机会~");
+					insufficientchance.push_back(u8"You don't have a chance to pick up any drift bottle right now! Throw a bottle to get 2 picks up chances, or you can also get 10 free times to pick up the bottle by using the drifting bottle for the first time every day!");
+					insufficientchance.push_back(u8"あなたは今漂流瓶を拾う機会がありませんでした。また漂流瓶を得る方法はこちら：1つの漂流瓶を捨てると2回の拾う機会を得ることができます。あるいは毎日の初めて漂流瓶を拾うと10回無料で機会を得ることができます。");
+					insufficientchance.push_back(u8"У тебя сейчас нет возможности подобрать дрифт бутылку! Брось бутылку, чтобы получить 2 возможности подобрать, или ты также можешь получить 10 бесплатных подборов бутылки используя дрифт бутылку раз в каждый день");
+					insufficientchance.push_back(u8"你当前没有捡瓶子的机会了");
+					send_message(tar, insufficientchance[utils::randomNum(0, insufficientchance.size() - 1)]);
+				}
 			}
 		};
 
@@ -378,7 +398,7 @@ namespace osucat::addons {
 				if (_stricmp(tar.message.substr(0, 12).c_str(), u8"捡漂流瓶") == 0 || _stricmp(tar.message.substr(0, 12).c_str(), u8"捞漂流瓶") == 0) {
 					Main::driftingBottleVoid(false, tar, sdr); return;
 				}
-				if (_stricmp(tar.message.substr(0, 4).c_str(), "roll") == 0) {
+				/*if (_stricmp(tar.message.substr(0, 4).c_str(), "roll") == 0) {
 					Main::roll(tar); Main::imagemonitor(sdr, tar); return;
 				}
 				if (_stricmp(tar.message.substr(0, 3).c_str(), "chp") == 0) {
@@ -399,7 +419,7 @@ namespace osucat::addons {
 				if (_stricmp(tar.message.substr(0, 12).c_str(), u8"舔狗日记") == 0) {
 					Main::tgrj(tar); return;
 				}
-
+				*/
 
 				//猜单词游戏部分
 				if (_stricmp(tar.message.substr(0, 15).c_str(), u8"猜单词帮助") == 0) {
