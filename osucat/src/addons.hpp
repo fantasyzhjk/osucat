@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #ifndef OC_ADDONS_HPP
 #define OC_ADDONS_HPP
 
@@ -23,7 +23,7 @@ namespace osucat::addons {
 				char reportMsg[1024];
 				sprintf_s(reportMsg,
 					"[%s]\n"
-					u8"ÓÃ»§ %s(%lld) ÉÏ´«ÁËÍ¼Æ¬,ÏûÏ¢ÄÚÈİÈçÏÂ£º\n%s",
+					u8"ç”¨æˆ· %s(%lld) ä¸Šä¼ äº†å›¾ç‰‡,æ¶ˆæ¯å†…å®¹å¦‚ä¸‹ï¼š\n%s",
 					utils::unixTime2Str(time(NULL)).c_str(),
 					sdr.nickname.c_str(),
 					tar.user_id,
@@ -36,8 +36,8 @@ namespace osucat::addons {
 		static void roll(const Target tar) {
 			string cmd = tar.message.substr(4);
 			cmd = utils::cqunescape(cmd);
-			if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"²»ÏëÀíÄã..."); return; }
-			if (cmd.length() > 199) { send_message(tar, u8"ÄãÏë¸ÉÂï..."); return; }
+			if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"ä¸æƒ³ç†ä½ ..."); return; }
+			if (cmd.length() > 199) { send_message(tar, u8"ä½ æƒ³å¹²å˜›..."); return; }
 			utils::string_trim(cmd);
 			int64_t value;
 			if (cmd.empty()) { send_message(tar, to_string(utils::randomNum(1, 100))); return; }
@@ -54,10 +54,10 @@ namespace osucat::addons {
 			}
 			vector<string> temp = utils::string_split(cmd, ' ');
 			if (temp.size() > 1) {
-				send_message(tar, u8"µ±È»ÊÇ" + temp[utils::randomNum(1, (int)temp.size()) - 1] + u8"¿©");
+				send_message(tar, u8"å½“ç„¶æ˜¯" + temp[utils::randomNum(1, (int)temp.size()) - 1] + u8"å’¯");
 			}
 			else
-				send_message(tar, u8"ĞèÒªÁ½¸ö»òÒÔÉÏµÄ²ÎÊıÀ²..Äã¸øµÄ²»¹»ß÷...");
+				send_message(tar, u8"éœ€è¦ä¸¤ä¸ªæˆ–ä»¥ä¸Šçš„å‚æ•°å•¦..ä½ ç»™çš„ä¸å¤Ÿå–µ...");
 		}
 
 		static void chp(const Target tar) {
@@ -67,16 +67,16 @@ namespace osucat::addons {
 		static void sleep(const Target tar) {
 			switch (utils::randomNum(1, 4)) {
 			case 1:
-				send_message(tar, u8"[CQ:record,file=osucat\\ÄãÔõÃ´Ë¯µÃ×ÅµÄ.mp3]");
+				send_message(tar, u8"[CQ:record,file=osucat\\ä½ æ€ä¹ˆç¡å¾—ç€çš„.mp3]");
 				break;
 			case 2:
-				send_message(tar, u8"[CQ:record,file=osucat\\Ë¯²»×Å°¡ Ó²°î°î.mp3]");
+				send_message(tar, u8"[CQ:record,file=osucat\\ç¡ä¸ç€å•Š ç¡¬é‚¦é‚¦.mp3]");
 				break;
 			case 3:
-				send_message(tar, u8"[CQ:record,file=osucat\\¶¡¶¡-Ë¯²»×Å°¡.mp3]");
+				send_message(tar, u8"[CQ:record,file=osucat\\ä¸ä¸-ç¡ä¸ç€å•Š.mp3]");
 				break;
 			case 4:
-				send_message(tar, u8"[CQ:record,file=osucat\\Ğ¡ÀÖÀÖ-Ë¯¾õÀ²²»ÒªÁÄÌìÀ².mp3]");
+				send_message(tar, u8"[CQ:record,file=osucat\\å°ä¹ä¹-ç¡è§‰å•¦ä¸è¦èŠå¤©å•¦.mp3]");
 				break;
 			default:
 				break;
@@ -86,32 +86,32 @@ namespace osucat::addons {
 		static void marketingGenerator(const Target tar) {
 			string cmd = tar.message.substr(18);
 			cmd = utils::cqunescape(cmd);
-			if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"²»ÏëÀíÄã..."); return; }
-			if (cmd.length() > 400) { send_message(tar, u8"Ì«³¤ÁË£¡"); return; }
+			if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"ä¸æƒ³ç†ä½ ..."); return; }
+			if (cmd.length() > 400) { send_message(tar, u8"å¤ªé•¿äº†ï¼"); return; }
 			utils::string_trim(cmd);
 			std::vector<std::string> temp = utils::string_split(cmd, '#');
-			if (temp.size() != 3) { send_message(tar, u8"²ÎÊıÓĞÎó£¬Éú³ÉÊ§°Ü¡£\n²ÎÊı¸ñÊ½Îª Ö÷Ìå#ÊÂ¼ş#ÊÂ¼şµÄÁíÒ»ÖÖËµ·¨"); return; }
-			std::string Ö÷Ìå = temp[0], ÊÂ¼ş = temp[1], ÊÂ¼şµÄÁíÒ»ÖÖËµ·¨ = temp[2];
+			if (temp.size() != 3) { send_message(tar, u8"å‚æ•°æœ‰è¯¯ï¼Œç”Ÿæˆå¤±è´¥ã€‚\nå‚æ•°æ ¼å¼ä¸º ä¸»ä½“#äº‹ä»¶#äº‹ä»¶çš„å¦ä¸€ç§è¯´æ³•"); return; }
+			std::string ä¸»ä½“ = temp[0], äº‹ä»¶ = temp[1], äº‹ä»¶çš„å¦ä¸€ç§è¯´æ³• = temp[2];
 			char message[3072];
 			sprintf_s(message,
 				3072,
-				u8"%s%sÊÇÔõÃ´»ØÊÂÄØ£¿%sÏàĞÅ´ó¼Ò¶¼ºÜÊìÏ¤£¬µ«ÊÇ%s%s"
-				u8"ÊÇÔõÃ´»ØÊÂÄØ£¬ÏÂÃæ¾ÍÈÃĞ¡±à´ø´ó¼ÒÒ»ÆğÁË½âÏÂ°É¡£"
-				u8"%s%s£¬ÆäÊµ¾ÍÊÇ%s£¬´ó¼Ò¿ÉÄÜ»áºÜ¾ªÑÈ%sÔõÃ´"
-				u8"%sÄØ£¿µ«ÊÂÊµ¾ÍÊÇÕâÑù£¬Ğ¡±àÒ²¸Ğµ½·Ç³£¾ªÑÈ¡£"
-				u8"Õâ¾ÍÊÇ¹ØÓÚ%s%sµÄÊÂÇéÁË£¬´ó¼ÒÓĞÊ²Ã´Ïë·¨ÄØ£¬»¶Ó­ÔÚÆÀÂÛÇøºÍĞ¡±àÒ»ÆğÌÖÂÛÅ¶~",
-				Ö÷Ìå.c_str(),
-				ÊÂ¼ş.c_str(),
-				Ö÷Ìå.c_str(),
-				Ö÷Ìå.c_str(),
-				ÊÂ¼ş.c_str(),
-				Ö÷Ìå.c_str(),
-				ÊÂ¼ş.c_str(),
-				ÊÂ¼şµÄÁíÒ»ÖÖËµ·¨.c_str(),
-				Ö÷Ìå.c_str(),
-				ÊÂ¼ş.c_str(),
-				Ö÷Ìå.c_str(),
-				ÊÂ¼ş.c_str());
+				u8"%s%sæ˜¯æ€ä¹ˆå›äº‹å‘¢ï¼Ÿ%sç›¸ä¿¡å¤§å®¶éƒ½å¾ˆç†Ÿæ‚‰ï¼Œä½†æ˜¯%s%s"
+				u8"æ˜¯æ€ä¹ˆå›äº‹å‘¢ï¼Œä¸‹é¢å°±è®©å°ç¼–å¸¦å¤§å®¶ä¸€èµ·äº†è§£ä¸‹å§ã€‚"
+				u8"%s%sï¼Œå…¶å®å°±æ˜¯%sï¼Œå¤§å®¶å¯èƒ½ä¼šå¾ˆæƒŠè®¶%sæ€ä¹ˆ"
+				u8"%så‘¢ï¼Ÿä½†äº‹å®å°±æ˜¯è¿™æ ·ï¼Œå°ç¼–ä¹Ÿæ„Ÿåˆ°éå¸¸æƒŠè®¶ã€‚"
+				u8"è¿™å°±æ˜¯å…³äº%s%sçš„äº‹æƒ…äº†ï¼Œå¤§å®¶æœ‰ä»€ä¹ˆæƒ³æ³•å‘¢ï¼Œæ¬¢è¿åœ¨è¯„è®ºåŒºå’Œå°ç¼–ä¸€èµ·è®¨è®ºå“¦~",
+				ä¸»ä½“.c_str(),
+				äº‹ä»¶.c_str(),
+				ä¸»ä½“.c_str(),
+				ä¸»ä½“.c_str(),
+				äº‹ä»¶.c_str(),
+				ä¸»ä½“.c_str(),
+				äº‹ä»¶.c_str(),
+				äº‹ä»¶çš„å¦ä¸€ç§è¯´æ³•.c_str(),
+				ä¸»ä½“.c_str(),
+				äº‹ä»¶.c_str(),
+				ä¸»ä½“.c_str(),
+				äº‹ä»¶.c_str());
 			send_message(tar, message);
 		}
 
@@ -119,21 +119,21 @@ namespace osucat::addons {
 			string cmd = tar.message;
 			try {
 				cmd = utils::cqunescape(cmd);
-				if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"²»ÏëÀíÄã..."); return; }
-				if (cmd.length() > 1024) { send_message(tar, u8"ÄãÏë¸ÉÂï..."); return; }
+				if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"ä¸æƒ³ç†ä½ ..."); return; }
+				if (cmd.length() > 1024) { send_message(tar, u8"ä½ æƒ³å¹²å˜›..."); return; }
 				utils::string_trim(cmd);
-				utils::string_replace(cmd, u8"ÎÒ", u8"{@@}");
-				utils::string_replace(cmd, u8"Äã", u8"ÎÒ");
-				utils::string_replace(cmd, u8"{@@}", u8"Äã");
-				if (cmd.substr(cmd.length() - 3, 3) == u8"£¿" || cmd.substr(cmd.length() - 1, 1) == "?")
-					cmd = cmd.substr(cmd.length() - 3, 3) == u8"£¿" ? cmd.substr(0, cmd.length() - 3)
+				utils::string_replace(cmd, u8"æˆ‘", u8"{@@}");
+				utils::string_replace(cmd, u8"ä½ ", u8"æˆ‘");
+				utils::string_replace(cmd, u8"{@@}", u8"ä½ ");
+				if (cmd.substr(cmd.length() - 3, 3) == u8"ï¼Ÿ" || cmd.substr(cmd.length() - 1, 1) == "?")
+					cmd = cmd.substr(cmd.length() - 3, 3) == u8"ï¼Ÿ" ? cmd.substr(0, cmd.length() - 3)
 					: cmd.substr(0, cmd.length() - 1);
-				if (cmd.substr(cmd.length() - 3, 3) == "Âğ" || cmd.substr(cmd.length() - 3, 3) == "ÄØ")
+				if (cmd.substr(cmd.length() - 3, 3) == "å—" || cmd.substr(cmd.length() - 3, 3) == "å‘¢")
 					cmd = cmd.substr(0, cmd.length() - 3);
-				if (cmd.find(u8"»¹ÊÇ") != string::npos) {
+				if (cmd.find(u8"è¿˜æ˜¯") != string::npos) {
 					string str1, str2;
-					str1 = cmd.substr(0, cmd.find(u8"»¹ÊÇ"));
-					str2 = cmd.substr(cmd.find(u8"»¹ÊÇ") + 6);
+					str1 = cmd.substr(0, cmd.find(u8"è¿˜æ˜¯"));
+					str2 = cmd.substr(cmd.find(u8"è¿˜æ˜¯") + 6);
 					if (str1.empty() || str2.empty()) return;
 					switch (utils::randomNum(1, 2)) {
 					case 1:
@@ -145,33 +145,33 @@ namespace osucat::addons {
 					}
 					return;
 				}
-				if (cmd.find(u8"²»") != string::npos) {
-					if ((cmd[cmd.find(u8"²»") - 1] & 0x80) != 0) {
-						//ÊÇºº×Ö
-						if (cmd.substr(cmd.find(u8"²»") - 3, 3) == cmd.substr(cmd.find(u8"²»") + 3, 3)) {
+				if (cmd.find(u8"ä¸") != string::npos) {
+					if ((cmd[cmd.find(u8"ä¸") - 1] & 0x80) != 0) {
+						//æ˜¯æ±‰å­—
+						if (cmd.substr(cmd.find(u8"ä¸") - 3, 3) == cmd.substr(cmd.find(u8"ä¸") + 3, 3)) {
 							//do something here
-							string str1 = cmd.substr(0, cmd.find(u8"²»") - 3), str2 = cmd.substr(cmd.find(u8"²»") + 3);
+							string str1 = cmd.substr(0, cmd.find(u8"ä¸") - 3), str2 = cmd.substr(cmd.find(u8"ä¸") + 3);
 							switch (utils::randomNum(1, 2)) {
 							case 1:
 								send_message(tar, str1 + str2);
 								break;
 							case 2:
-								send_message(tar, str1 + u8"²»" + str2);
+								send_message(tar, str1 + u8"ä¸" + str2);
 								break;
 							}
 						}
 					}
 					else {
-						//²»ÊÇºº×Ö
-						if (cmd.substr(0, cmd.find(u8"²»")) == cmd.substr(cmd.find(u8"²»") + 3)) {
+						//ä¸æ˜¯æ±‰å­—
+						if (cmd.substr(0, cmd.find(u8"ä¸")) == cmd.substr(cmd.find(u8"ä¸") + 3)) {
 							//do something here
-							string str1 = cmd.substr(0, cmd.find(u8"²»")), str2 = cmd.substr(cmd.find(u8"²»") + 3);
+							string str1 = cmd.substr(0, cmd.find(u8"ä¸")), str2 = cmd.substr(cmd.find(u8"ä¸") + 3);
 							switch (utils::randomNum(1, 2)) {
 							case 1:
 								send_message(tar, str2);
 								break;
 							case 2:
-								send_message(tar, u8"²»" + str2);
+								send_message(tar, u8"ä¸" + str2);
 								break;
 							}
 						}
@@ -187,9 +187,9 @@ namespace osucat::addons {
 			string cmd = tar.message.substr(7);
 			cmd = utils::cqunescape(cmd);
 			utils::string_trim(cmd);
-			if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"²»ÏëÀíÄã..."); return; }
-			if (cmd.length() > 199) { send_message(tar, u8"Ì«³¤ÁË£¡"); return; }
-			if (cmd == "") { send_message(tar, u8"Äã¶¼²»¸æËßÎÒÄãÒª·­ÒëÉ¶£¨ÄÕ£©"); return; }
+			if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"ä¸æƒ³ç†ä½ ..."); return; }
+			if (cmd.length() > 199) { send_message(tar, u8"å¤ªé•¿äº†ï¼"); return; }
+			if (cmd == "") { send_message(tar, u8"ä½ éƒ½ä¸å‘Šè¯‰æˆ‘ä½ è¦ç¿»è¯‘å•¥ï¼ˆæ¼ï¼‰"); return; }
 			json jp;
 			jp["text"] = cmd;
 			try {
@@ -215,16 +215,16 @@ namespace osucat::addons {
 					if (tmp1 != "") {
 						char trntmp[8192];
 						sprintf_s(trntmp,
-							u8"ÒÔÏÂÊÇ\"%s\"µÄÈË»°£º%s",
+							u8"ä»¥ä¸‹æ˜¯\"%s\"çš„äººè¯ï¼š%s",
 							cmd.c_str(),
 							tmp1.c_str());
 						send_message(tar, trntmp);
 					}
-					else { send_message(tar, u8"Ã»ÓĞÕÒµ½Õâ¶ÑËõĞ´µÄ·­Òë;w;"); }
+					else { send_message(tar, u8"æ²¡æœ‰æ‰¾åˆ°è¿™å †ç¼©å†™çš„ç¿»è¯‘;w;"); }
 				}
-				catch (json::exception) { send_message(tar, u8"Ã»ÓĞÕÒµ½Õâ¶ÑËõĞ´µÄ·­Òë;w;"); }
+				catch (json::exception) { send_message(tar, u8"æ²¡æœ‰æ‰¾åˆ°è¿™å †ç¼©å†™çš„ç¿»è¯‘;w;"); }
 			}
-			catch (osucat::NetWork_Exception) { send_message(tar, u8"»ñÈ¡·­ÒëÊ±³¬Ê±...ÇëÉÔºóÔÙÊÔ..."); }
+			catch (osucat::NetWork_Exception) { send_message(tar, u8"è·å–ç¿»è¯‘æ—¶è¶…æ—¶...è¯·ç¨åå†è¯•..."); }
 		}
 
 		static void tgrj(const Target tar) {
@@ -239,27 +239,27 @@ namespace osucat::addons {
 			if (ThrowOrPick) {
 				int throwcount = 0;
 				for (int i = 0; i < j.size(); ++i) { if (stoll(j[i]["sender"].get<std::string>()) == tar.user_id) { ++throwcount; } }
-				if (throwcount > 20) { send_message(tar, u8"ÄãÒÑ¾­ÈÓÁË20¸öÆ¿×Ó³öÈ¥ÁË...ĞİÏ¢Ò»ÏÂÔÙÈÓ°É...");				return; }
+				if (throwcount > 20) { send_message(tar, u8"ä½ å·²ç»æ‰”äº†20ä¸ªç“¶å­å‡ºå»äº†...ä¼‘æ¯ä¸€ä¸‹å†æ‰”å§...");				return; }
 				cmd = utils::cqunescape(cmd);
 				utils::string_trim(cmd);
-				if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"²»ÏëÀíÄã...");			return; }
-				if (cmd.length() == 0) { send_message(tar, u8"²»ÈçĞ´µãÊ²Ã´ÔÙÈÓ...?");					return; }
-				if (cmd.length() > 5000) { send_message(tar, u8"Ì«³¤ÁË£¡"); return; }
+				if (utils::forbiddenWordsLibrary(cmd) == true) { send_message(tar, u8"ä¸æƒ³ç†ä½ ...");			return; }
+				if (cmd.length() == 0) { send_message(tar, u8"ä¸å¦‚å†™ç‚¹ä»€ä¹ˆå†æ‰”" + utils::random_numofchars(u8".", 3, 8) + u8"?");					return; }
+				if (cmd.length() > 5000) { send_message(tar, u8"å¤ªé•¿äº†ï¼"); return; }
 				time_t timetmp = time(NULL);
 				db.setBottleRemaining(2, tar.user_id);
 				db.writeBottle(driftingBottleDBEvent::WRITEIN, 0, timetmp, tar.user_id, senderinfo.nickname, utils::ocescape(cmd));
 				db.addPickThrowCount(false);
 				char reportMsg[6000];
-				string s_bottle = utils::randomNum(1, 100) > 50 ? +u8"Æ¯Á÷Æ¿" : +u8"Æ¿×Ó";
+				string s_bottle = utils::randomNum(1, 100) > 50 ? +u8"æ¼‚æµç“¶" : +u8"ç“¶å­";
 				Sleep(100);
-				string s_yours = utils::randomNum(1, 100) > 50 ? +u8"ÄãµÄ" : +u8"¾ı¤Î";
+				string s_yours = utils::randomNum(1, 100) > 50 ? +u8"ä½ çš„" : +u8"å›ã®";
 				Sleep(100);
-				string s_sendout = utils::randomNum(1, 100) > 50 ? +u8"Æ¯ÍùÔ¶·½" : +u8"Á÷ÏòÔ¶·½";
+				string s_sendout = utils::randomNum(1, 100) > 50 ? +u8"æ¼‚å¾€è¿œæ–¹" : +u8"æµå‘è¿œæ–¹";
 				if (cmd.find("[CQ:image") != string::npos) {
-					send_message(tar, s_yours + s_bottle + u8"ÒÑ¾­" + s_sendout + utils::random_numofchars(u8".", 3, 8));
+					send_message(tar, s_yours + s_bottle + u8"å·²ç»" + s_sendout + utils::random_numofchars(u8".", 3, 8));
 					sprintf_s(reportMsg,
 						"[%s]\n"
-						u8"ÓÃ»§ %s(%lld) ÔÚÆ¯Á÷Æ¿ÄÚÉÏ´«ÁËÍ¼Æ¬\nÆ¯Á÷Æ¿ID: %d\nÏûÏ¢ÄÚÈİÈçÏÂ£º\n%s",
+						u8"ç”¨æˆ· %s(%lld) åœ¨æ¼‚æµç“¶å†…ä¸Šä¼ äº†å›¾ç‰‡\næ¼‚æµç“¶ID: %d\næ¶ˆæ¯å†…å®¹å¦‚ä¸‹ï¼š\n%s",
 						utils::unixTime2Str(time(NULL)).c_str(),
 						senderinfo.nickname.c_str(),
 						tar.user_id,
@@ -269,10 +269,10 @@ namespace osucat::addons {
 					send_group_message(management_groupid, reportMsg);
 				}
 				else {
-					send_message(tar, s_yours + s_bottle + u8"ÒÑ¾­" + s_sendout + utils::random_numofchars(u8".", 3, 8));
+					send_message(tar, s_yours + s_bottle + u8"å·²ç»" + s_sendout + utils::random_numofchars(u8".", 3, 8));
 					sprintf_s(reportMsg,
 						"[%s]\n"
-						u8"ÓÃ»§ %s(%lld) ÉÏ´«ÁËÆ¯Á÷Æ¿\nÆ¯Á÷Æ¿ID: %d\nÏûÏ¢ÄÚÈİÈçÏÂ£º\n%s",
+						u8"ç”¨æˆ· %s(%lld) ä¸Šä¼ äº†æ¼‚æµç“¶\næ¼‚æµç“¶ID: %d\næ¶ˆæ¯å†…å®¹å¦‚ä¸‹ï¼š\n%s",
 						utils::unixTime2Str(time(NULL)).c_str(),
 						senderinfo.nickname.c_str(),
 						tar.user_id,
@@ -286,7 +286,7 @@ namespace osucat::addons {
 				int a = db.getUserBottleRemaining(tar.user_id);
 				if (a > 0) {
 					if (j.size() != 0) {
-						string s_contentis = utils::randomNum(1, 100) > 50 ? +u8"Æ¿×ÓÀïµÄÄÚÈİÊÇ" : +u8"Æ¿¤ÎÖĞÉí¤Ï";
+						string s_contentis = utils::randomNum(1, 100) > 50 ? +u8"ç“¶å­é‡Œçš„å†…å®¹æ˜¯" : +u8"ç“¶ã®ä¸­èº«ã¯";
 						db.setBottleRemaining(3, tar.user_id);
 						int tempi = utils::randomNum(0, j.size() - 1);
 						for (int i = 0; i < j.size(); ++i) {
@@ -306,8 +306,8 @@ namespace osucat::addons {
 						db.writeBottle(osucat::addons::driftingBottleDBEvent::ADDCOUNTER, dfb.id, 0, 0, "", "");
 						char tempm[6000];
 						sprintf_s(tempm,
-							u8"ÕâÊÇÀ´×Ô %s(%lld) µÄÆ¯Á÷Æ¿%s\n"
-							u8"ID:%d ·¢ÓÚ %s\n"
+							u8"è¿™æ˜¯æ¥è‡ª %s(%lld) çš„æ¼‚æµç“¶%s\n"
+							u8"ID:%d å‘äº %s\n"
 							u8"%s%s\n%s",
 							dfb.nickname.c_str(),
 							dfb.sender, utils::random_numofchars(u8".", 3, 8).c_str(), dfb.id,
@@ -317,36 +317,36 @@ namespace osucat::addons {
 						if (db.RemoveBottle(floor((time(NULL) - stoll(j[tempi]["sendtime"].get<std::string>())) / 86400), dfb.id)) {
 							if (dfb.pickcount == 0) {
 								sprintf_s(tempm,
-									u8"Äã·¢ÓÚ %s\n"
-									u8"µÄÄÚÈİÎª%s%sµÄÏûÏ¢ÒÑ¾­±» %s(%lld) ÀÌÆğÀ´ÁË%s\n",
+									u8"ä½ å‘äº %s\n"
+									u8"çš„å†…å®¹ä¸º%s%sçš„æ¶ˆæ¯å·²ç»è¢« %s(%lld) æèµ·æ¥äº†%s\n",
 									utils::unixTime2StrChinese(dfb.sendTime).c_str(),
 									utils::random_numofchars(u8".", 3, 8).c_str(), dfb.msg.c_str(),
-									senderinfo.nickname.c_str(), tar.user_id), utils::random_numofchars(u8".", 3, 8).c_str();
+									senderinfo.nickname.c_str(), tar.user_id, utils::random_numofchars(u8".", 3, 8).c_str());
 							}
 							else {
 								sprintf_s(tempm,
-									u8"Äã·¢ÓÚ %s\n"
-									u8"µÄÄÚÈİÎª%s%sµÄÏûÏ¢ÒÑ¾­±» %s(%lld) ÀÌÆğÀ´ÁË....\nÔÚ´ËÖ®Ç°ÄãµÄÆ¿×Ó»¹±»ÔÄ¶ÁÁË %d ´Î%s",
+									u8"ä½ å‘äº %s\n"
+									u8"çš„å†…å®¹ä¸º%s%sçš„æ¶ˆæ¯å·²ç»è¢« %s(%lld) æèµ·æ¥äº†....\nåœ¨æ­¤ä¹‹å‰ä½ çš„ç“¶å­è¿˜è¢«é˜…è¯»äº† %d æ¬¡%s",
 									utils::unixTime2StrChinese(dfb.sendTime).c_str(),
 									utils::random_numofchars(u8".", 3, 8).c_str(), dfb.msg.c_str(),
-									senderinfo.nickname.c_str(), tar.user_id, dfb.pickcount),
-									utils::random_numofchars(u8".", 3, 8).c_str();
+									senderinfo.nickname.c_str(), tar.user_id, dfb.pickcount,
+									utils::random_numofchars(u8".", 3, 8).c_str());
 							}
 							Sleep(3000);
 							send_private_message(dfb.sender, tempm);
 						}
 					}
-					else { 
-						send_message(tar, u8"»¹Ã»ÓĞÈË¶ª¹ıÆ¯Á÷Æ¿ÄØ" + utils::random_numofchars(u8".", 3, 8)); 
+					else {
+						send_message(tar, u8"è¿˜æ²¡æœ‰äººä¸¢è¿‡æ¼‚æµç“¶å‘¢" + utils::random_numofchars(u8".", 3, 8));
 					}
 				}
 				else {
 					vector<string> insufficientchance;
-					insufficientchance.push_back(u8"Äãµ±Ç°Ã»ÓĞ¼ñÆ¿×ÓµÄ»ú»áÁË£¬ÈÓ<Ò»¸ö>Æ¯Á÷Æ¿¿ÉÒÔ»ñµÃ<Á½´Î>´òÀÌµÄ»ú»á£¬»òÃ¿ÈÕ<Ê×´Î>Ê¹ÓÃÆ¯Á÷Æ¿Ò²¿É»ñµÃ<10´Î>Ãâ·Ñ´òÀÌµÄ»ú»á~");
+					insufficientchance.push_back(u8"ä½ å½“å‰æ²¡æœ‰æ¡ç“¶å­çš„æœºä¼šäº†ï¼Œæ‰”<ä¸€ä¸ª>æ¼‚æµç“¶å¯ä»¥è·å¾—<ä¸¤æ¬¡>æ‰“æçš„æœºä¼šï¼Œæˆ–æ¯æ—¥<é¦–æ¬¡>ä½¿ç”¨æ¼‚æµç“¶ä¹Ÿå¯è·å¾—<10æ¬¡>å…è´¹æ‰“æçš„æœºä¼š~");
 					insufficientchance.push_back(u8"You don't have a chance to pick up any drift bottle right now! Throw a bottle to get 2 picks up chances, or you can also get 10 free times to pick up the bottle by using the drifting bottle for the first time every day!");
-					insufficientchance.push_back(u8"¤¢¤Ê¤¿¤Ï½ñÆ¯Á÷Æ¿¤òÊ°¤¦™C»á¤¬¤¢¤ê¤Ş¤»¤ó¤Ç¤·¤¿¡£¤Ş¤¿Æ¯Á÷Æ¿¤òµÃ¤ë·½·¨¤Ï¤³¤Á¤é£º1¤Ä¤ÎÆ¯Á÷Æ¿¤ò’Î¤Æ¤ë¤È2»Ø¤ÎÊ°¤¦™C»á¤òµÃ¤ë¤³¤È¤¬¤Ç¤­¤Ş¤¹¡£¤¢¤ë¤¤¤Ïš°ÈÕ¤Î³õ¤á¤ÆÆ¯Á÷Æ¿¤òÊ°¤¦¤È10»ØŸoÁÏ¤Ç™C»á¤òµÃ¤ë¤³¤È¤¬¤Ç¤­¤Ş¤¹¡£");
-					insufficientchance.push_back(u8"§µ §ä§Ö§Ò§ñ §ã§Ö§Û§é§Ñ§ã §ß§Ö§ä §Ó§à§Ù§Ş§à§Ø§ß§à§ã§ä§Ú §á§à§Õ§à§Ò§â§Ñ§ä§î §Õ§â§Ú§æ§ä §Ò§å§ä§í§İ§Ü§å! §¢§â§à§ã§î §Ò§å§ä§í§İ§Ü§å, §é§ä§à§Ò§í §á§à§İ§å§é§Ú§ä§î 2 §Ó§à§Ù§Ş§à§Ø§ß§à§ã§ä§Ú §á§à§Õ§à§Ò§â§Ñ§ä§î, §Ú§İ§Ú §ä§í §ä§Ñ§Ü§Ø§Ö §Ş§à§Ø§Ö§ê§î §á§à§İ§å§é§Ú§ä§î 10 §Ò§Ö§ã§á§İ§Ñ§ä§ß§í§ç §á§à§Õ§Ò§à§â§à§Ó §Ò§å§ä§í§İ§Ü§Ú §Ú§ã§á§à§İ§î§Ù§å§ñ §Õ§â§Ú§æ§ä §Ò§å§ä§í§İ§Ü§å §â§Ñ§Ù §Ó §Ü§Ñ§Ø§Õ§í§Û §Õ§Ö§ß§î");
-					insufficientchance.push_back(u8"Äãµ±Ç°Ã»ÓĞ¼ñÆ¿×ÓµÄ»ú»áÁË");
+					insufficientchance.push_back(u8"ã‚ãªãŸã¯ä»Šæ¼‚æµç“¶ã‚’æ‹¾ã†æ©Ÿä¼šãŒã‚ã‚Šã¾ã›ã‚“ã§ã—ãŸã€‚ã¾ãŸæ¼‚æµç“¶ã‚’å¾—ã‚‹æ–¹æ³•ã¯ã“ã¡ã‚‰ï¼š1ã¤ã®æ¼‚æµç“¶ã‚’æ¨ã¦ã‚‹ã¨2å›ã®æ‹¾ã†æ©Ÿä¼šã‚’å¾—ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚ã‚ã‚‹ã„ã¯æ¯æ—¥ã®åˆã‚ã¦æ¼‚æµç“¶ã‚’æ‹¾ã†ã¨10å›ç„¡æ–™ã§æ©Ÿä¼šã‚’å¾—ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚");
+					insufficientchance.push_back(u8"Ğ£ Ñ‚ĞµĞ±Ñ ÑĞµĞ¹Ñ‡Ğ°Ñ Ğ½ĞµÑ‚ Ğ²Ğ¾Ğ·Ğ¼Ğ¾Ğ¶Ğ½Ğ¾ÑÑ‚Ğ¸ Ğ¿Ğ¾Ğ´Ğ¾Ğ±Ñ€Ğ°Ñ‚ÑŒ Ğ´Ñ€Ğ¸Ñ„Ñ‚ Ğ±ÑƒÑ‚Ñ‹Ğ»ĞºÑƒ! Ğ‘Ñ€Ğ¾ÑÑŒ Ğ±ÑƒÑ‚Ñ‹Ğ»ĞºÑƒ, Ñ‡Ñ‚Ğ¾Ğ±Ñ‹ Ğ¿Ğ¾Ğ»ÑƒÑ‡Ğ¸Ñ‚ÑŒ 2 Ğ²Ğ¾Ğ·Ğ¼Ğ¾Ğ¶Ğ½Ğ¾ÑÑ‚Ğ¸ Ğ¿Ğ¾Ğ´Ğ¾Ğ±Ñ€Ğ°Ñ‚ÑŒ, Ğ¸Ğ»Ğ¸ Ñ‚Ñ‹ Ñ‚Ğ°ĞºĞ¶Ğµ Ğ¼Ğ¾Ğ¶ĞµÑˆÑŒ Ğ¿Ğ¾Ğ»ÑƒÑ‡Ğ¸Ñ‚ÑŒ 10 Ğ±ĞµÑĞ¿Ğ»Ğ°Ñ‚Ğ½Ñ‹Ñ… Ğ¿Ğ¾Ğ´Ğ±Ğ¾Ñ€Ğ¾Ğ² Ğ±ÑƒÑ‚Ñ‹Ğ»ĞºĞ¸ Ğ¸ÑĞ¿Ğ¾Ğ»ÑŒĞ·ÑƒÑ Ğ´Ñ€Ğ¸Ñ„Ñ‚ Ğ±ÑƒÑ‚Ñ‹Ğ»ĞºÑƒ Ñ€Ğ°Ğ· Ğ² ĞºĞ°Ğ¶Ğ´Ñ‹Ğ¹ Ğ´ĞµĞ½ÑŒ");
+					insufficientchance.push_back(u8"Báº¡n háº¿t lÆ°á»£t vá»›t chai, NÃ©m má»™t chai Ä‘á»ƒ nháº­n thÃªm 2 lÆ°á»£t, Hoáº·c nháº­n 10 lÆ°á»£t vá»›t chai cho ngÃ y hÃ´m sau.");
 					send_message(tar, insufficientchance[utils::randomNum(0, insufficientchance.size() - 1)]);
 				}
 			}
@@ -357,10 +357,16 @@ namespace osucat::addons {
 			db.Connect();
 			int t = db.getUserBottleRemaining(tar.user_id);
 			if (t > 0) {
-				send_message(tar, u8"Äãµ±Ç°»¹¿ÉÒÔ¼ñ" + to_string(t) + u8"¸öÆ¿×Ó£¡");
+				send_message(tar, u8"ä½ å½“å‰è¿˜å¯ä»¥æ¡" + to_string(t) + u8"ä¸ªç“¶å­ï¼");
 			}
 			else {
-				send_message(tar, u8"Äãµ±Ç°Ã»ÓĞ¼ñÆ¿×ÓµÄ»ú»áÁË£¬ÈÓÆ¯Á÷Æ¿¿ÉÒÔ»ñµÃÒ»´Î´òÀÌµÄ»ú»á£¬»òÃ¿ÈÕÊ×´ÎÊ¹ÓÃÆ¯Á÷Æ¿Ò²¿É»ñµÃ20´ÎÃâ·Ñ´òÀÌµÄ»ú»á~");
+				vector<string> insufficientchance;
+				insufficientchance.push_back(u8"ä½ å½“å‰æ²¡æœ‰æ¡ç“¶å­çš„æœºä¼šäº†ï¼Œæ‰”<ä¸€ä¸ª>æ¼‚æµç“¶å¯ä»¥è·å¾—<ä¸¤æ¬¡>æ‰“æçš„æœºä¼šï¼Œæˆ–æ¯æ—¥<é¦–æ¬¡>ä½¿ç”¨æ¼‚æµç“¶ä¹Ÿå¯è·å¾—<10æ¬¡>å…è´¹æ‰“æçš„æœºä¼š~");
+				insufficientchance.push_back(u8"You don't have a chance to pick up any drift bottle right now! Throw a bottle to get 2 picks up chances, or you can also get 10 free times to pick up the bottle by using the drifting bottle for the first time every day!");
+				insufficientchance.push_back(u8"ã‚ãªãŸã¯ä»Šæ¼‚æµç“¶ã‚’æ‹¾ã†æ©Ÿä¼šãŒã‚ã‚Šã¾ã›ã‚“ã§ã—ãŸã€‚ã¾ãŸæ¼‚æµç“¶ã‚’å¾—ã‚‹æ–¹æ³•ã¯ã“ã¡ã‚‰ï¼š1ã¤ã®æ¼‚æµç“¶ã‚’æ¨ã¦ã‚‹ã¨2å›ã®æ‹¾ã†æ©Ÿä¼šã‚’å¾—ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚ã‚ã‚‹ã„ã¯æ¯æ—¥ã®åˆã‚ã¦æ¼‚æµç“¶ã‚’æ‹¾ã†ã¨10å›ç„¡æ–™ã§æ©Ÿä¼šã‚’å¾—ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚");
+				insufficientchance.push_back(u8"Ğ£ Ñ‚ĞµĞ±Ñ ÑĞµĞ¹Ñ‡Ğ°Ñ Ğ½ĞµÑ‚ Ğ²Ğ¾Ğ·Ğ¼Ğ¾Ğ¶Ğ½Ğ¾ÑÑ‚Ğ¸ Ğ¿Ğ¾Ğ´Ğ¾Ğ±Ñ€Ğ°Ñ‚ÑŒ Ğ´Ñ€Ğ¸Ñ„Ñ‚ Ğ±ÑƒÑ‚Ñ‹Ğ»ĞºÑƒ! Ğ‘Ñ€Ğ¾ÑÑŒ Ğ±ÑƒÑ‚Ñ‹Ğ»ĞºÑƒ, Ñ‡Ñ‚Ğ¾Ğ±Ñ‹ Ğ¿Ğ¾Ğ»ÑƒÑ‡Ğ¸Ñ‚ÑŒ 2 Ğ²Ğ¾Ğ·Ğ¼Ğ¾Ğ¶Ğ½Ğ¾ÑÑ‚Ğ¸ Ğ¿Ğ¾Ğ´Ğ¾Ğ±Ñ€Ğ°Ñ‚ÑŒ, Ğ¸Ğ»Ğ¸ Ñ‚Ñ‹ Ñ‚Ğ°ĞºĞ¶Ğµ Ğ¼Ğ¾Ğ¶ĞµÑˆÑŒ Ğ¿Ğ¾Ğ»ÑƒÑ‡Ğ¸Ñ‚ÑŒ 10 Ğ±ĞµÑĞ¿Ğ»Ğ°Ñ‚Ğ½Ñ‹Ñ… Ğ¿Ğ¾Ğ´Ğ±Ğ¾Ñ€Ğ¾Ğ² Ğ±ÑƒÑ‚Ñ‹Ğ»ĞºĞ¸ Ğ¸ÑĞ¿Ğ¾Ğ»ÑŒĞ·ÑƒÑ Ğ´Ñ€Ğ¸Ñ„Ñ‚ Ğ±ÑƒÑ‚Ñ‹Ğ»ĞºÑƒ Ñ€Ğ°Ğ· Ğ² ĞºĞ°Ğ¶Ğ´Ñ‹Ğ¹ Ğ´ĞµĞ½ÑŒ");
+				insufficientchance.push_back(u8"Báº¡n háº¿t lÆ°á»£t vá»›t chai, NÃ©m má»™t chai Ä‘á»ƒ nháº­n thÃªm 2 lÆ°á»£t, Hoáº·c nháº­n 10 lÆ°á»£t vá»›t chai cho ngÃ y hÃ´m sau.");
+				send_message(tar, insufficientchance[utils::randomNum(0, insufficientchance.size() - 1)]);
 			}
 		}
 
@@ -374,8 +380,8 @@ namespace osucat::addons {
 			Database db;
 			db.Connect();
 			int n = db.getNumberOfAvailableBottles();
-			if (n == 0) { send_message(tar, u8"º£ÉÏÄ¿Ç°»¹Ã»ÓĞÆ¯Á÷Æ¿ÄØ..."); }
-			else { send_message(tar, u8"µ±Ç°º£ÉÏÓĞ " + to_string(n) + u8" ¸öÆ¯Á÷Æ¿ÕıÔÚÔ¶º½..."); }
+			if (n == 0) { send_message(tar, u8"æµ·ä¸Šç›®å‰è¿˜æ²¡æœ‰æ¼‚æµç“¶å‘¢..."); }
+			else { send_message(tar, u8"å½“å‰æµ·ä¸Šæœ‰ " + to_string(n) + u8" ä¸ªæ¼‚æµç“¶æ­£åœ¨è¿œèˆª..."); }
 		}
 	};
 
@@ -383,19 +389,19 @@ namespace osucat::addons {
 	public:
 		static void parser(const Target tar, const GroupSender sdr) {
 			try {
-				if (_stricmp(tar.message.substr(0, 18).c_str(), u8"Ê£Óà´òÀÌ´ÎÊı") == 0) {
+				if (_stricmp(tar.message.substr(0, 18).c_str(), u8"å‰©ä½™æ‰“ææ¬¡æ•°") == 0) {
 					Main::remainingPickupcount(tar); return;
 				}
-				if (_stricmp(tar.message.substr(0, 15).c_str(), u8"Æ¯Á÷Æ¿²ÎÊı") == 0) {
+				if (_stricmp(tar.message.substr(0, 15).c_str(), u8"æ¼‚æµç“¶å‚æ•°") == 0) {
 					Main::bottleStatistics(tar); return;
 				}
-				if (_stricmp(tar.message.substr(0, 21).c_str(), u8"º£ÉÏÆ¯Á÷Æ¿ÊıÁ¿") == 0) {
+				if (_stricmp(tar.message.substr(0, 21).c_str(), u8"æµ·ä¸Šæ¼‚æµç“¶æ•°é‡") == 0) {
 					Main::availableBottleCount(tar); return;
 				}
-				if (_stricmp(tar.message.substr(0, 12).c_str(), u8"ÈÓÆ¯Á÷Æ¿") == 0 || _stricmp(tar.message.substr(0, 12).c_str(), u8"¶ªÆ¯Á÷Æ¿") == 0) {
+				if (_stricmp(tar.message.substr(0, 12).c_str(), u8"æ‰”æ¼‚æµç“¶") == 0 || _stricmp(tar.message.substr(0, 12).c_str(), u8"ä¸¢æ¼‚æµç“¶") == 0) {
 					Main::driftingBottleVoid(true, tar, sdr); return;
 				}
-				if (_stricmp(tar.message.substr(0, 12).c_str(), u8"¼ñÆ¯Á÷Æ¿") == 0 || _stricmp(tar.message.substr(0, 12).c_str(), u8"ÀÌÆ¯Á÷Æ¿") == 0) {
+				if (_stricmp(tar.message.substr(0, 12).c_str(), u8"æ¡æ¼‚æµç“¶") == 0 || _stricmp(tar.message.substr(0, 12).c_str(), u8"ææ¼‚æµç“¶") == 0) {
 					Main::driftingBottleVoid(false, tar, sdr); return;
 				}
 				/*if (_stricmp(tar.message.substr(0, 4).c_str(), "roll") == 0) {
@@ -407,45 +413,45 @@ namespace osucat::addons {
 				if (_stricmp(tar.message.substr(0, 5).c_str(), "sleep") == 0) {
 					Main::sleep(tar); return;
 				}
-				if (_stricmp(tar.message.substr(0, 18).c_str(), u8"ÓªÏúºÅÉú³ÉÆ÷") == 0) {
+				if (_stricmp(tar.message.substr(0, 18).c_str(), u8"è¥é”€å·ç”Ÿæˆå™¨") == 0) {
 					Main::marketingGenerator(tar); Main::imagemonitor(sdr, tar); return;
 				}
 				if (_stricmp(tar.message.substr(0, 7).c_str(), "nbnhhsh") == 0) {
 					Main::nbnhhsh(tar); Main::imagemonitor(sdr, tar); return;
 				}
-				if (tar.message.find(u8"»¹ÊÇ") != string::npos || tar.message.find(u8"²»") != string::npos || tar.message.find(u8"Ã»") != string::npos) {
+				if (tar.message.find(u8"è¿˜æ˜¯") != string::npos || tar.message.find(u8"ä¸") != string::npos || tar.message.find(u8"æ²¡") != string::npos) {
 					Main::randEvents(tar); Main::imagemonitor(sdr, tar); return;
 				}
-				if (_stricmp(tar.message.substr(0, 12).c_str(), u8"Ìò¹·ÈÕ¼Ç") == 0) {
+				if (_stricmp(tar.message.substr(0, 12).c_str(), u8"èˆ”ç‹—æ—¥è®°") == 0) {
 					Main::tgrj(tar); return;
 				}
 				*/
 
-				//²Âµ¥´ÊÓÎÏ·²¿·Ö
-				if (_stricmp(tar.message.substr(0, 15).c_str(), u8"²Âµ¥´Ê°ïÖú") == 0) {
+				//çŒœå•è¯æ¸¸æˆéƒ¨åˆ†
+				if (_stricmp(tar.message.substr(0, 15).c_str(), u8"çŒœå•è¯å¸®åŠ©") == 0) {
 					send_message(tar, u8"[CQ:image,file=osucat\\help\\hangmanhelp.png]");
 					return;
 				}
-				if (_stricmp(tar.message.substr(0, 15).c_str(), u8"²Âµ¥´Ê×´Ì¬") == 0) {
+				if (_stricmp(tar.message.substr(0, 15).c_str(), u8"çŒœå•è¯çŠ¶æ€") == 0) {
 					send_message(tar, HangmanGame::gameStatus());
 					return;
 				}
-				if (_stricmp(tar.message.substr(0, 18).c_str(), u8"²Âµ¥´ÊÅÅĞĞ°ñ") == 0) {
+				if (_stricmp(tar.message.substr(0, 18).c_str(), u8"çŒœå•è¯æ’è¡Œæ¦œ") == 0) {
 					int page = 1;
 					string page_str = tar.message.substr(18);
 					if (utils::isNum(page_str)) page = stoi(page_str);
 					send_message(tar, HangmanGame::hangmanRanking(page));
 					return;
 				}
-				if (_stricmp(tar.message.substr(0, 10).c_str(), u8"²Âµ¥´Ê+") == 0) {
+				if (_stricmp(tar.message.substr(0, 10).c_str(), u8"çŒœå•è¯+") == 0) {
 					send_message(tar, HangmanGame::startHangman(tar, tar.message.substr(10)));
 					return;
 				}
-				if (_stricmp(tar.message.substr(0, 9).c_str(), u8"²Âµ¥´Ê") == 0) {
+				if (_stricmp(tar.message.substr(0, 9).c_str(), u8"çŒœå•è¯") == 0) {
 					send_message(tar, HangmanGame::startHangman(tar, ""));
 					return;
 				}
-				if (_stricmp(tar.message.substr(0, 6).c_str(), u8"·ÅÆú") == 0) {
+				if (_stricmp(tar.message.substr(0, 6).c_str(), u8"æ”¾å¼ƒ") == 0) {
 					send_message(tar, HangmanGame::giveupHangman(tar));
 					return;
 				}
@@ -453,7 +459,7 @@ namespace osucat::addons {
 					send_message(tar, HangmanGame::inputHangman(tar, tar.message));
 					return;
 				}
-				if (_stricmp(tar.message.substr(0, 15).c_str(), u8"ÎÒµÄ²Âµ¥´Ê") == 0) {
+				if (_stricmp(tar.message.substr(0, 15).c_str(), u8"æˆ‘çš„çŒœå•è¯") == 0) {
 					send_message(tar, HangmanGame::showPlayerData(tar));
 					return;
 				}
@@ -464,18 +470,18 @@ namespace osucat::addons {
 							return;
 						}
 					}
-					send_message(tar, u8"È¨ÏŞ²»×ã");
+					send_message(tar, u8"æƒé™ä¸è¶³");
 					return;
 				}
 			}
 			catch (osucat::database_exception& ex) {
-				send_message(tar, u8"·ÃÎÊÊı¾İ¿âÊ±³öÏÖÁËÒ»¸ö´íÎó£¬ÇëÉÔºóÖØÊÔ...");
+				send_message(tar, u8"è®¿é—®æ•°æ®åº“æ—¶å‡ºç°äº†ä¸€ä¸ªé”™è¯¯ï¼Œè¯·ç¨åé‡è¯•...");
 				char reportMsg[1024];
 				sprintf_s(reportMsg,
 					"[%s]\n"
-					u8"Mysql³öÏÖ´íÎó\n"
-					u8"´íÎó´úÂë£º%d\n"
-					u8"ÏêÏ¸ĞÅÏ¢£º%s\n",
+					u8"Mysqlå‡ºç°é”™è¯¯\n"
+					u8"é”™è¯¯ä»£ç ï¼š%d\n"
+					u8"è¯¦ç»†ä¿¡æ¯ï¼š%s\n",
 					utils::unixTime2Str(time(NULL)).c_str(),
 					ex.Code(),
 					ex.Info().c_str()
@@ -483,17 +489,17 @@ namespace osucat::addons {
 				send_private_message(owner_userid, reportMsg);
 			}
 			catch (osucat::NetWork_Exception& ex) {
-				send_message(tar, u8"·ÃÎÊapiÊ±³¬Ê±...ÇëÉÔºóÖØÊÔ...");
+				send_message(tar, u8"è®¿é—®apiæ—¶è¶…æ—¶...è¯·ç¨åé‡è¯•...");
 			}
 			catch (std::exception& ex) {
-				send_message(tar, u8"addonsÄ£¿é³öÏÖÁËÒ»¸öÎ´Öª´íÎó£¬ÇëÉÔºóÖØÊÔ...");
+				send_message(tar, u8"addonsæ¨¡å—å‡ºç°äº†ä¸€ä¸ªæœªçŸ¥é”™è¯¯ï¼Œè¯·ç¨åé‡è¯•...");
 				char reportMsg[1024];
 				sprintf_s(reportMsg,
 					"[%s]\n"
-					u8"ÒÑ²¶»ñstd::exception\n"
-					u8"²Ù×÷Õß£º%lld\n"
-					u8"´¥·¢Ö¸Áî£º%s\n"
-					u8"ÏêÏ¸ĞÅÏ¢£º%s\n",
+					u8"å·²æ•è·std::exception\n"
+					u8"æ“ä½œè€…ï¼š%lld\n"
+					u8"è§¦å‘æŒ‡ä»¤ï¼š%s\n"
+					u8"è¯¦ç»†ä¿¡æ¯ï¼š%s\n",
 					utils::unixTime2Str(time(NULL)).c_str(),
 					tar.user_id,
 					tar.message.c_str(),
