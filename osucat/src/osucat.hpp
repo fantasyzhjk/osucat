@@ -2486,6 +2486,19 @@ namespace osucat {
 				try {
 					if (!NetConnection::getUserElo(UI.user_info.user_id, &elo)) {
 						elo = 0;
+					} else {
+						int match_id = osucat::NetConnection::getUserEloRecentPlay(UI.user_info.user_id);
+						json result = osucat::NetConnection::getMatchInfo(match_id)["result"];
+						tm tm;
+						for (auto& el : result.items()) {
+							utils::fakestrptime(el.value()["start_time"].get<string>().data(), "", &tm);
+							break;
+						}
+						time_t t_ = mktime(&tm);
+						time_t t_now = time(NULL);
+						if ((t_now - t_) > 31622400) {
+							elo = 0;
+						}
 					}
 				}
 				catch (std::exception) {
