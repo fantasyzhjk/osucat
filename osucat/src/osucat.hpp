@@ -2484,7 +2484,7 @@ namespace osucat {
 				preProcess();
 				int elo;
 				try {
-					if (!NetConnection::getUserElo(UserID, &elo)) {
+					if (!NetConnection::getUserElo(UI.user_info.user_id, &elo)) {
 						elo = 0;
 					}
 				}
