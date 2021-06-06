@@ -3856,6 +3856,25 @@ namespace cqhttp_api::utils {
 		}
 		return rtn;
 	}
+	// ËÄÉáÎåÈë
+	static double round(double x, double d)
+	{
+		double D = d;
+		d = 5 * pow(10, -d - 1);
+		if (x > 0)
+		{
+			x = x + d;
+			x = x + 1e-6;
+			x = int(x * pow(10, D)) / pow(10, D);
+		}
+		else
+		{
+			x = x - d;
+			x = x - 1e-6;
+			x = int(x * pow(10, D)) / pow(10, D);
+		}
+		return x;
+	};
 };
 
 namespace cqhttp_api {

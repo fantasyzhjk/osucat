@@ -2347,81 +2347,158 @@ namespace osucat {
 			}
 			cqhttp_api::send_message(tar, message);
 		}
-
-		static void occost(const Target tar) {
-			string cmd = utils::cqunescape(tar.message.substr(6));
+		static void roleCost(const Target tar) {
+			string cmd = utils::cqunescape(tar.message.substr(8));
 			utils::string_trim(cmd);
-			utils::string_replace(cmd, u8"：", ":");
-			utils::string_replace(cmd, "[CQ:", "");
+			utils::string_replace(cmd, " ", "");
 			Database db;
 			db.Connect();
 			db.addcallcount();
 			string username = "";
 			int64_t UserID;
-			double a, c, z, p;
 			UserPanelData UI = { 0 };
-			if (cmd.length() > 1) {
-				if (cmd.find("at,qq=") != string::npos) {
-					UserID = db.osu_getuserid(stoll(utils::GetMiddleText(cmd, "=", "]")));
+			auto preProcess = [&]() {
+				utils::string_replace(cmd, u8"：", ":");
+				utils::string_replace(cmd, "[CQ:", "");
+				if (cmd.length() > 1) {
+					if (cmd.find("at,qq=") != string::npos) {
+						UserID = db.osu_getuserid(stoll(utils::GetMiddleText(cmd, "=", "]")));
+						if (UserID == 0) {
+							cqhttp_api::send_message(tar, 被查询的用户未绑定osu账号);
+							return;
+						}
+					}
+					else {
+						username = cmd;
+					}
+				}
+				else {
+					UserID = db.osu_getuserid(tar.user_id);
 					if (UserID == 0) {
-						cqhttp_api::send_message(tar, 被查询的用户未绑定osu账号);
+						cqhttp_api::send_message(tar, 用户没有绑定osu账号);
+						return;
+					}
+				}
+				if (username.empty()) {
+					if (osu_api::v1::api::GetUser(UserID, osu_api::v1::mode::std, &UI.user_info) == 0) {
+						cqhttp_api::send_message(tar, 被查询的用户已被bancho封禁);
 						return;
 					}
 				}
 				else {
-					username = cmd;
+					if (username.length() > 40) {
+						cqhttp_api::send_message(tar, 所提供的参数超出长度限制);
+						return;
+					}
+					if (osu_api::v1::api::GetUser(username, osu_api::v1::mode::std, &UI.user_info) == 0) {
+						cqhttp_api::send_message(tar, 未从bancho检索到要查询的用户信息);
+						return;
+					}
 				}
+				// 自PP+停止服务之后 均使用缓存读取内容
+				//p = db.GetUserPreviousPP(UI.user_info.user_id);
+				//if (UI.user_info.pp != p) {
+				//    vector<long> pp_plus;
+				//    try {
+				//        pp_plus = NetConnection::getUserPlusData(UI.user_info.user_id);
+				//        pplus_info pi;
+				//        pi.acc = pp_plus[0];
+				//        pi.flow = pp_plus[1];
+				//        pi.jump = pp_plus[2];
+				//        pi.pre = pp_plus[3];
+				//        pi.spd = pp_plus[4];
+				//        pi.sta = pp_plus[5];
+				//        db.UpdatePPlus(UI.user_info.user_id, UI.user_info.pp, pi);
+				//        p = UI.user_info.pp;
+				//    } catch (std::exception) {
+				//    }
+				//}
+				db.osu_GetUserPreviousPPlus(UI.user_info.user_id, &UI.pplus_info);
+			};
+			auto occost = [&]() {
+				double a, c, z, p;
+				p = UI.user_info.pp;
+				z = 1.92 * pow(UI.pplus_info.jump, 0.953) + 69.7 * pow(UI.pplus_info.flow, 0.596)
+					+ 0.588 * pow(UI.pplus_info.spd, 1.175) + 3.06 * pow(UI.pplus_info.sta, 0.993);
+				a = pow(UI.pplus_info.acc, 1.2768) * pow(p, 0.88213);
+				c = min(0.00930973 * pow(p / 1000, 2.64192) * pow(z / 4000, 1.48422), 7) + min(a / 7554280, 3);
+				char message[512];
+				sprintf_s(message, 512, u8"在猫猫杯S1中，%s 的cost为：%.2f", UI.user_info.username.c_str(), c);
+				cqhttp_api::send_message(tar, message);
+			};
+			auto oncost = [&]()
+			{
+				double fx,pp = UI.user_info.pp;
+				char message[512];
+				if (pp <= 4000 && pp >= 2000) {
+					fx = utils::round(pow(1.00053, pp) - 2.88, 2);
+					sprintf_s(message, 512, u8"在ONC中，%s 的cost为：%.2f", UI.user_info.username.c_str(), fx);
+				} else {
+					sprintf_s(message, 512, u8"该玩家不在参赛范围内");
+				}
+				cqhttp_api::send_message(tar, message);
+			};
+			auto ostcost = [&](int elo)
+			{
+				int rank = UI.user_info.global_rank;
+				double rankelo, cost;
+				if (elo == 0) {
+					elo = 1500 - 600 * (log((rank + 500) / 8500.0) / log(4.0));
+				}
+				else {
+					rankelo = 1500 - 600 * (log((rank + 500) / 8500.0) / log(4.0));
+					if (elo > rankelo) {
+						rankelo = elo;
+					}
+					else {
+						elo = 0.8 * rankelo + 0.2 * elo;
+					}
+				}
+				if (elo > 850) {
+					cost = 27 * (elo - 700) / 3200.0;
+				}
+				else {
+					cost = 3 * pow(((elo - 400) / 600.0), 3);
+					if (cost <= 0) {
+						cost = 0;
+					}
+				}
+				char message[512];
+				sprintf_s(message, 512, u8"在OST中，%s 的cost为：%.2f", UI.user_info.username.c_str(), utils::round(cost, 2));
+				cqhttp_api::send_message(tar, message);
+			};
+			if (_stricmp(cmd.substr(0, 3).c_str(), "occ") == 0) {
+				cmd = utils::cqunescape(cmd.substr(3));
+				preProcess();
+				occost();
+				return;
 			}
-			else {
-				UserID = db.osu_getuserid(tar.user_id);
-				if (UserID == 0) {
-					cqhttp_api::send_message(tar, 用户没有绑定osu账号);
+			if (_stricmp(cmd.substr(0, 3).c_str(), "onc") == 0) {
+				cmd = utils::cqunescape(cmd.substr(3));
+				preProcess();
+				oncost();
+				return;
+			}
+			if (_stricmp(cmd.substr(0, 3).c_str(), "ost") == 0) {
+				cmd = utils::cqunescape(cmd.substr(3));
+				preProcess();
+				int elo;
+				try {
+					if (!NetConnection::getUserElo(UserID, &elo)) {
+						elo = 0;
+					}
+				}
+				catch (std::exception) {
+				}
+				catch (osucat::NetConnection) {
+					send_message(tar, u8"获取elo失败，请重试。。");
 					return;
 				}
+				ostcost(elo);
+				return;
 			}
-			if (username.empty()) {
-				if (osu_api::v1::api::GetUser(UserID, osu_api::v1::mode::std, &UI.user_info) == 0) {
-					cqhttp_api::send_message(tar, 被查询的用户已被bancho封禁);
-					return;
-				}
-			}
-			else {
-				if (username.length() > 40) {
-					cqhttp_api::send_message(tar, 所提供的参数超出长度限制);
-					return;
-				}
-				if (osu_api::v1::api::GetUser(username, osu_api::v1::mode::std, &UI.user_info) == 0) {
-					cqhttp_api::send_message(tar, 未从bancho检索到要查询的用户信息);
-					return;
-				}
-			}
-			// 自PP+停止服务之后 均使用缓存读取内容
-			//p = db.GetUserPreviousPP(UI.user_info.user_id);
-			//if (UI.user_info.pp != p) {
-			//    vector<long> pp_plus;
-			//    try {
-			//        pp_plus = NetConnection::getUserPlusData(UI.user_info.user_id);
-			//        pplus_info pi;
-			//        pi.acc = pp_plus[0];
-			//        pi.flow = pp_plus[1];
-			//        pi.jump = pp_plus[2];
-			//        pi.pre = pp_plus[3];
-			//        pi.spd = pp_plus[4];
-			//        pi.sta = pp_plus[5];
-			//        db.UpdatePPlus(UI.user_info.user_id, UI.user_info.pp, pi);
-			//        p = UI.user_info.pp;
-			//    } catch (std::exception) {
-			//    }
-			//}
-			p = UI.user_info.pp;
-			db.osu_GetUserPreviousPPlus(UI.user_info.user_id, &UI.pplus_info);
-			z = 1.92 * pow(UI.pplus_info.jump, 0.953) + 69.7 * pow(UI.pplus_info.flow, 0.596)
-				+ 0.588 * pow(UI.pplus_info.spd, 1.175) + 3.06 * pow(UI.pplus_info.sta, 0.993);
-			a = pow(UI.pplus_info.acc, 1.2768) * pow(p, 0.88213);
-			c = min(0.00930973 * pow(p / 1000, 2.64192) * pow(z / 4000, 1.48422), 7) + min(a / 7554280, 3);
 			char message[512];
-			sprintf_s(message, 512, u8"在猫猫杯S1中，%s 的cost为：%.2f", UI.user_info.username.c_str(), c);
-			cqhttp_api::send_message(tar, message);
+			cqhttp_api::send_message(tar, u8"请输入要查询cost的比赛名");
 		}
 
 		static void searchuid(const Target tar) {
@@ -4000,8 +4077,8 @@ namespace osucat {
 					if (_stricmp(tar.message.substr(0, 14).c_str(), "resetinfopanel") == 0) {
 						Main::resetinfopanel_v1(tar); return;
 					}
-					if (_stricmp(tar.message.substr(0, 6).c_str(), "occost") == 0) {
-						Main::occost(tar); return;
+					if (_stricmp(tar.message.substr(0, 8).c_str(), "rolecost") == 0) {
+						Main::roleCost(tar); return;
 					}
 					if (_stricmp(tar.message.substr(0, 7).c_str(), "bonuspp") == 0) {
 						Main::bonuspp(tar); return;

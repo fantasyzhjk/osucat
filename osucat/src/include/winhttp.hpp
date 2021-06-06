@@ -3,6 +3,7 @@
 #define OC_WINHTTP_HPP
 #define PP_PLUS_URL "https://syrin.me/pp+/u/"
 #define PP_PLUS_API "https://syrin.me/pp+/api/user/"
+#define ELO_API "http://api.osuwiki.cn:5005/api/users/elo/"
 #define HTTPHEADER L"osucat/<1.0> (Windows NT 10.0; Win64) WinHttp/5.1"
 
 using json = nlohmann::json;
@@ -417,6 +418,19 @@ namespace osucat {
 			}
 			//??
 			return ppd;
+		}
+		// 查询elo，返回布尔值，true则elo不为初始elo
+		static bool getUserElo(std::int64_t uid,int *elo) {
+			char url[512];
+			std::string response;
+			sprintf_s(url, ELO_API "%I64d", uid);
+			response = HttpGet(url);
+			if (!response.empty()) {
+				json data = json::parse(response);
+				*elo = data["elo"].get<int>();
+				if (data["elo"].get<int>() == data["init_elo"].get<int>()){ return false; };
+			}
+			return true;
 		}
 	};
 }
